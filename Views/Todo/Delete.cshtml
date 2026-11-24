@@ -1,0 +1,27 @@
+@model TodoItem
+@{
+    ViewData["Title"] = "ยืนยันการลบ";
+}
+
+<h2>ยืนยันการลบ</h2>
+
+<div class="alert alert-warning">
+    คุณต้องการลบงานนี้ใช่หรือไม่?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-2">ชื่องาน</dt>
+    <dd class="col-sm-10">@Model.Title</dd>
+
+    <dt class="col-sm-2">รายละเอียด</dt>
+    <dd class="col-sm-10">@(Model.Description ?? "-")</dd>
+
+    <dt class="col-sm-2">กำหนดส่ง</dt>
+    <dd class="col-sm-10">@(Model.DueDate?.ToString("dd/MM/yyyy") ?? "-")</dd>
+</dl>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">ลบงานนี้</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">ยกเลิก</a>
+</form>

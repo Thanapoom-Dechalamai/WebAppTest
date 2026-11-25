@@ -1,0 +1,45 @@
+@model string
+@* Line icons for the atmosphere categories: 32 x 32, one stroke weight, colour from the text *@
+<svg class="env-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+@switch (Model) {
+    case "beach":
+        <text><path d="M9 17a7 7 0 0 1 14 0" /><path d="M16 6v2M7.5 9.5l1.4 1.4M24.5 9.5l-1.4 1.4" /><path d="M4 21c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5" /><path d="M4 26c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5" /></text>
+        break;
+    case "forest":
+        <text><path d="M11 4 5 15h4l-5 8h14l-5-8h4z" /><path d="M11 23v5" /><path d="M22 9l-4 7h3l-4 6h10l-4-6h3z" /><path d="M22 22v6M3 28h26" /></text>
+        break;
+    case "mountain":
+        <text><path d="M3 26 12 10l5 8 3-4 9 12z" /><path d="M9.5 14.5 12 16l2-1.5" /><circle cx="24" cy="7" r="2.5" /></text>
+        break;
+    case "city":
+        <text><path d="M4 28h24" /><path d="M6 28V13h7v15" /><path d="M13 28V6h8v22" /><path d="M21 28V16h6v12" /><path d="M16 10h2M16 14h2M16 18h2M9 17h1M9 21h1M24 20h0.01M24 24h0.01" /></text>
+        break;
+    case "river":
+        <text><path d="M3 12c3 0 3-2 6.5-2S13 12 16 12s3-2 6.5-2 3.5 2 6.5 2" /><path d="M3 18c3 0 3-2 6.5-2S13 18 16 18s3-2 6.5-2 3.5 2 6.5 2" /><path d="M3 24c3 0 3-2 6.5-2S13 24 16 24s3-2 6.5-2 3.5 2 6.5 2" /></text>
+        break;
+    case "garden":
+        <text><path d="M16 28V15" /><path d="M11 6c0 5 2 8 5 9 3-1 5-4 5-9l-2.5 2L16 5l-2.5 3z" /><path d="M16 22c-2-3-5-4-8-3 1 3 4 4 8 3zM16 25c2-3 5-4 8-3-1 3-4 4-8 3z" /></text>
+        break;
+    case "lake":
+        <text><ellipse cx="16" cy="21" rx="12" ry="5" /><path d="M10 21c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1" /><path d="M24 16V7M24 9c-2 0-3 1.5-3 3M24 11c2 0 3 1.5 3 3" /></text>
+        break;
+    case "ricefield":
+        <text><path d="M3 28h26" /><path d="M8 28V16M16 28V12M24 28V16" /><path d="M8 19c-2-1-3-3-3-5 2 0 3 2 3 5zM8 22c2-1 3-3 3-5-2 0-3 2-3 5zM16 15c-2-1-3-3-3-5 2 0 3 2 3 5zM16 18c2-1 3-3 3-5-2 0-3 2-3 5zM24 19c-2-1-3-3-3-5 2 0 3 2 3 5zM24 22c2-1 3-3 3-5-2 0-3 2-3 5z" /></text>
+        break;
+    case "pool":
+        <text><path d="M10 22V8a3 3 0 0 1 6 0M18 22V8a3 3 0 0 1 6 0" /><path d="M10 12h8M10 17h8" /><path d="M3 25c2.2 0 2.2-1.5 4.4-1.5S9.6 25 11.8 25 14 23.5 16.2 23.5 18.4 25 20.6 25s2.2-1.5 4.4-1.5S27.2 25 29 25" /></text>
+        break;
+    case "airport":
+        <text><path d="M29 9.5c0-1.4-1.6-2-3-1.3L19.5 11.5 9 7.5l-2.5 1.3 8 5.4-4.6 2.4-3.6-1.4-1.8.9 3.4 3.7 4.6-.6 15.2-7.5c1.3-.6 1.9-1.4 1.8-2.2z" /><path d="M4 27h24" /></text>
+        break;
+    case "shopping":
+        <text><path d="M6 11h20l-1.5 17h-17z" /><path d="M11.5 14v-4a4.5 4.5 0 0 1 9 0v4" /></text>
+        break;
+    case "golf":
+        <text><path d="M12 26V4l10 4.5L12 13" /><ellipse cx="14" cy="26" rx="10" ry="2.5" /><circle cx="22" cy="22" r="1.4" /></text>
+        break;
+    default:
+        <text><circle cx="10" cy="10" r="4" /><circle cx="22" cy="10" r="4" /><circle cx="10" cy="22" r="4" /><circle cx="22" cy="22" r="4" /></text>
+        break;
+}
+</svg>

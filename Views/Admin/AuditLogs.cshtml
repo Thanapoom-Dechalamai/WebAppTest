@@ -1,0 +1,45 @@
+@model AuditLogPage
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ประวัติการใช้งานระบบ";
+   static string Short(string? value) => value is null ? "—" : value.Length > 120 ? value[..120] + "…" : value; }
+<section class="stay-container commerce-page audit-page"><partial name="_RoleNavigation" />
+<h1>ประวัติการใช้งานระบบ</h1>
+<p class="lead-note">ทุกการเพิ่ม แก้ไข หรือลบข้อมูลถูกบันทึกอัตโนมัติ พร้อมผู้ทำรายการและค่าก่อน/หลัง ใช้ตรวจสอบย้อนหลังเมื่อมีปัญหา เช่น ยอดเครดิตไม่ตรง หรือการจองถูกยกเลิกโดยไม่ทราบสาเหตุ</p>
+<form method="get" asp-action="AuditLogs" class="surface audit-filters">
+    <label>ตาราง<select name="table"><option value="">ทุกตาราง</option>@foreach (var t in Model.Tables) { <option value="@t" selected="@(t == Model.Table)">@AuditLabels.Table(t) (@t)</option> }</select></label>
+    <label>การกระทำ<select name="kind"><option value="">ทั้งหมด</option><option value="Added" selected="@(Model.Kind == "Added")">เพิ่ม</option><option value="Modified" selected="@(Model.Kind == "Modified")">แก้ไข</option><option value="Deleted" selected="@(Model.Kind == "Deleted")">ลบ</option></select></label>
+    <label>ผู้ทำรายการ<input type="search" name="actor" value="@Model.Actor" placeholder="อีเมลหรือชื่อ" maxlength="100" /></label>
+    <label>รหัสรายการ<input type="search" name="record" value="@Model.Record" placeholder="เช่น LG000012 หรือ 12" maxlength="80" /></label>
+    <label>ตั้งแต่<input type="date" name="from" value="@(Model.From?.ToString("yyyy-MM-dd"))" /></label>
+    <label>ถึง<input type="date" name="to" value="@(Model.To?.ToString("yyyy-MM-dd"))" /></label>
+    <div class="audit-filter-actions"><button class="stay-button" type="submit">ค้นหา</button><a class="stay-button secondary" asp-action="AuditLogs">ล้างตัวกรอง</a></div>
+</form>
+<p class="muted">พบ @Model.Total.ToString("N0") รายการ · หน้า @Model.PageNumber จาก @Model.Pages</p>
+@if (Model.Rows.Count == 0) {
+    <div class="surface empty-results"><p>ไม่พบรายการตามตัวกรองนี้</p></div>
+} else {
+    <div class="surface audit-scroll">
+        <table class="audit-table">
+            <thead><tr><th>เวลา</th><th>ผู้ทำรายการ</th><th>ข้อมูล</th><th>การกระทำ</th><th>รหัส</th><th>รายละเอียด</th></tr></thead>
+            <tbody>
+                @foreach (var row in Model.Rows) {
+                    var changes = row.Changes();
+                    <tr>
+                        <td class="nowrap">@row.Log.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>@if (row.ActorName is not null) { <strong>@row.ActorName</strong><br /><small>@row.ActorEmail</small> } else if (row.Log.ActorUserId is not null) { <span>ผู้ใช้ #@row.Log.ActorUserId</span> } else { <span class="muted">ระบบ</span> }</td>
+                        <td>@row.TableLabel<br /><small class="muted">@row.Log.TableName</small></td>
+                        <td><span class="audit-kind audit-@row.Log.Action.ToLowerInvariant()">@row.ActionLabel</span></td>
+                        <td class="nowrap">@row.Log.RecordId</td>
+                        <td>@if (changes.Count == 0) { <span class="muted">ไม่มีค่าที่เปลี่ยน</span> } else {
+                            <details><summary>@changes.Count ช่อง</summary><dl class="audit-changes">@foreach (var c in changes) { <dt>@c.Field</dt><dd>@if (row.Log.Action == "Modified") { <s>@Short(c.Old)</s><span> เป็น </span> }<b>@Short(row.Log.Action == "Deleted" ? c.Old : c.New)</b></dd> }</dl></details>
+                        }</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav class="pager" aria-label="เปลี่ยนหน้า">
+        @if (Model.PageNumber > 1) { <a class="stay-button secondary small-button" asp-action="AuditLogs" asp-route-table="@Model.Table" asp-route-kind="@Model.Kind" asp-route-actor="@Model.Actor" asp-route-record="@Model.Record" asp-route-from="@(Model.From?.ToString("yyyy-MM-dd"))" asp-route-to="@(Model.To?.ToString("yyyy-MM-dd"))" asp-route-pageNo="@((Model.PageNumber - 1).ToString())">ก่อนหน้า</a> }
+        @if (Model.PageNumber < Model.Pages) { <a class="stay-button secondary small-button" asp-action="AuditLogs" asp-route-table="@Model.Table" asp-route-kind="@Model.Kind" asp-route-actor="@Model.Actor" asp-route-record="@Model.Record" asp-route-from="@(Model.From?.ToString("yyyy-MM-dd"))" asp-route-to="@(Model.To?.ToString("yyyy-MM-dd"))" asp-route-pageNo="@((Model.PageNumber + 1).ToString())">ถัดไป</a> }
+    </nav>
+}
+</section>

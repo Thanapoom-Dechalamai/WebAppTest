@@ -1,0 +1,6 @@
+@{var current=ViewContext.RouteData.Values["action"]?.ToString();}
+<nav class="role-navigation ac-tabs" aria-label="รายงานบัญชี">
+    <a class="@(current=="Index"?"is-active":"")" asp-controller="AC" asp-action="Index">ภาพรวมเงินและเงินเข้า–ออก</a>
+    <a class="@(current=="Settlement"?"is-active":"")" asp-controller="AC" asp-action="Settlement">สรุปยอดและโอนให้โรงแรม</a>
+    <a class="@(current=="Reconcile"?"is-active":"")" asp-controller="AC" asp-action="Reconcile">กระทบยอด wallet</a>
+</nav>

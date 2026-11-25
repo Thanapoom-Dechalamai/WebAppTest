@@ -1,0 +1,9 @@
+@model ReconcilePage
+@{Layout="_StayLayout";ViewData["Title"]="AC · กระทบยอด wallet";}
+<section class="stay-container commerce-page"><partial name="_RoleNavigation" /><h1>กระทบยอด wallet</h1>
+<p class="lead-note">เปรียบเทียบยอดเครดิตคงเหลือกับผลรวมรายการเงินเข้า–ออกของแต่ละบัญชี ส่วนต่างบวกคือยอดคงเหลือมากกว่าประวัติ ส่วนต่างลบคือยอดคงเหลือน้อยกว่าประวัติ ฝ่ายบัญชีตรวจสอบที่มาของส่วนต่างก่อนแก้ไข</p>
+<partial name="_ACTabs" />
+@if(Model.Mismatches.Count==0){<p class="notice success">ตรวจแล้ว @Model.WalletCount บัญชี · ยอดตรงกันทุกบัญชี</p>}
+else{<p class="notice error">ตรวจแล้ว @Model.WalletCount บัญชี · ยอดไม่ตรง @Model.Mismatches.Count บัญชี</p>
+<div class="surface table-scroll"><table class="ledger-table"><thead><tr><th>บัญชี</th><th>ยอดคงเหลือใน wallet</th><th>ผลรวมรายการ</th><th>ส่วนต่าง</th></tr></thead><tbody>@foreach(var r in Model.Mismatches){<tr><td>@r.Email<br /><small class="muted">#@r.UserId</small></td><td>฿@r.Balance.ToString("N2")</td><td>฿@r.LedgerTotal.ToString("N2")</td><td class="@(r.Difference>0?"positive":"negative")">@r.Difference.ToString("N2")</td></tr>}</tbody></table></div>}
+</section>

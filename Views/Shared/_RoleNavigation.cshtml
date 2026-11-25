@@ -1,0 +1,9 @@
+<nav class="role-navigation" aria-label="ส่วนงานตามบทบาท">
+    @if (User.IsInRole(AppRoles.Customer) || User.IsInRole(AppRoles.Admin)) { <a asp-controller="Customer" asp-action="Index">Customer · ลูกค้า</a> }
+    @if (User.IsInRole(AppRoles.Staff) || User.IsInRole(AppRoles.Admin)) { <a asp-controller="Staff" asp-action="Index">Staff · Lodgo support</a> }
+    @if (User.IsInRole(AppRoles.Owner) || User.IsInRole(AppRoles.Admin)) { <a asp-controller="Owner" asp-action="Index">Owner · ภาพรวม</a> }
+    @if (User.IsInRole(AppRoles.Manager) || User.IsInRole(AppRoles.Admin)) { <a asp-controller="Manager" asp-action="Index">Manager · ทีมงาน</a> }
+    @if (User.IsInRole(AppRoles.AC) || User.IsInRole(AppRoles.Admin)) { <a asp-controller="AC" asp-action="Index">AC · บัญชี</a> }
+    @if (User.IsInRole(AppRoles.Admin)) { <a asp-controller="Admin" asp-action="Index">Admin · ระบบ</a> }
+    @if (User.IsInRole(AppRoles.HotelOwner) || User.IsInRole(AppRoles.Admin)) { <a asp-controller="HotelOwner" asp-action="Index">HotelStaff · พนักงานโรงแรม</a> }
+</nav>

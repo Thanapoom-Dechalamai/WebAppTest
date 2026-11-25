@@ -1,0 +1,29 @@
+@model IReadOnlyList<HotelCardViewModel>
+@{ Layout = "_StayLayout"; ViewData["Title"] = "รายการโปรด"; }
+<section class="stay-container commerce-page wishlist-page">
+    <h1>รายการโปรด</h1>
+    <p class="lead-note">ที่พักที่คุณกดหัวใจไว้ กดหัวใจอีกครั้งเพื่อเอาออก หรือเปิดดูห้องพักเพื่อจองต่อ</p>
+    <partial name="_CommerceMessage" />
+    @if (Model.Count == 0) {
+        <div class="surface wishlist-empty">
+            <h2>ยังไม่มีรายการโปรด</h2>
+            <p>กดรูปหัวใจบนการ์ดที่พักหรือในหน้ารายละเอียดโรงแรม แล้วโรงแรมนั้นจะมาอยู่ที่นี่</p>
+            <a class="stay-button" asp-controller="Account" asp-action="Index" asp-fragment="hotels">ค้นหาที่พัก</a>
+        </div>
+    } else {
+        <p class="wishlist-count">@Model.Count.ToString("N0") ที่พัก</p>
+        <div class="wishlist-grid">
+            @foreach (var hotel in Model) {
+                <article class="surface wishlist-card">
+                    <div class="wishlist-art"><partial name="_HotelPhoto" model="hotel" /><partial name="_WishlistButton" model="hotel.Id" /></div>
+                    <div class="wishlist-body">
+                        <p class="hotel-city">@hotel.City</p>
+                        <h2>@hotel.Name</h2>
+                        @if (hotel.ReviewScore is double score) { <p class="hotel-rating"><b>@score.ToString("0.0")</b> @ReviewOptions.ScoreLabel(score) <small>· @hotel.ReviewCount.ToString("N0") รีวิว</small></p> }
+                        <div class="wishlist-bottom"><p class="hotel-price">@if (hotel.StartingRate is decimal rate) { <text>฿@rate.ToString("#,##0.##") <span>/ คืน</span></text> } else { <span>ยังไม่เปิดจอง</span> }</p><a class="stay-button" asp-controller="Stays" asp-action="Details" asp-route-id="@hotel.Id">ดูห้องพัก</a></div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>

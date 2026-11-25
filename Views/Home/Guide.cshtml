@@ -1,0 +1,51 @@
+@{ Layout = "_StayLayout"; ViewData["Title"] = "Lodgo ทำอะไรได้บ้าง"; var showPasswords = ViewData["ShowPasswords"] as bool? ?? true; }
+<section class="stay-container commerce-page guide-page">
+    <header class="guide-hero">
+        <h1>Lodgo ทำอะไรได้บ้าง</h1>
+        <p class="lead-note">ตามการจองหนึ่งรายการตั้งแต่ลูกค้าขอใบเสนอราคาไปจนถึงฝ่ายบัญชีโอนเงินให้โรงแรม แต่ละขั้นมีบัญชีทดลองและปุ่ม “ลองเลย” ที่พาไปหน้าที่ต้องใช้</p>
+        <div class="guide-hero-actions">
+            <a class="stay-button" href="@GuideContent.LoginUrl(GuideContent.Steps[0])">เริ่มที่ขั้นที่ 1</a>
+            <a class="stay-button secondary" href="#roles">ดูความสามารถของแต่ละบทบาท</a>
+        </div>
+    </header>
+
+    <h2 class="guide-section-title" id="flow">เส้นทางของการจอง 1 รายการ</h2>
+    <ol class="guide-flow">
+        @foreach (var step in GuideContent.Steps) {
+            <li class="guide-step">
+                <div class="guide-step-head">
+                    <span class="guide-step-no" aria-hidden="true">@step.No</span>
+                    <div><span class="guide-role">@step.Role</span><h3>@step.Title</h3></div>
+                </div>
+                <p>@step.What</p>
+                <dl class="guide-account">
+                    <dt>บัญชี</dt><dd><code>@step.Email</code></dd>
+                    @if (showPasswords) { <dt>รหัสผ่าน</dt><dd><code>@step.Password</code></dd> }
+                </dl>
+                <a class="stay-button guide-try" href="@GuideContent.LoginUrl(step)">
+                    ลองเลย
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </a>
+                @if (step.No < GuideContent.Steps.Count) {
+                    <svg class="guide-next" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                }
+            </li>
+        }
+    </ol>
+    <p class="muted guide-note">ปุ่ม "ลองเลย" จะพาไปหน้าเข้าสู่ระบบโดยกรอกอีเมลไว้ให้ ถ้ากำลังใช้บัญชีอื่นอยู่ ระบบจะสลับบัญชีให้ · ทุกครั้งที่สถานะการจองเปลี่ยน ลูกค้าและโรงแรมจะเห็นที่ไอคอนกระดิ่งมุมขวาบน</p>
+
+    <h2 class="guide-section-title" id="roles">แต่ละบทบาททำอะไรได้บ้าง</h2>
+    <div class="guide-roles">
+        @foreach (var role in GuideContent.Roles) {
+            <article class="surface guide-role-card">
+                <h3>@role.Role</h3>
+                <p class="guide-role-account"><code>@role.Email</code>@if (showPasswords) { <span> · รหัสผ่าน <code>@role.Password</code></span> }</p>
+                <ul>
+                    @foreach (var ability in role.Abilities) {
+                        <li><a href="@GuideContent.LoginUrl(role.Email, ability.Url)">@ability.Text</a></li>
+                    }
+                </ul>
+            </article>
+        }
+    </div>
+</section>

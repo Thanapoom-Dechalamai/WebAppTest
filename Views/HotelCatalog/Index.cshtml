@@ -1,0 +1,45 @@
+@model IReadOnlyList<HotelCatalogRow>
+@{
+    Layout = "_StayLayout";
+    ViewData["Title"] = "จัดการข้อมูลโรงแรม";
+}
+<section class="stay-container commerce-page">
+    <h1>จัดการข้อมูลโรงแรม</h1>
+    <partial name="_CommerceMessage" />
+    <p class="role-inline hotel-catalog-actions">
+        <a class="stay-button" asp-action="Create">เพิ่มโรงแรม</a>
+        <a class="stay-button secondary" asp-controller="HotelManagement" asp-action="Index">จัดทีมและค่าธรรมเนียม</a>
+        <a class="stay-button secondary" asp-controller="Stays" asp-action="Index">ดูหน้าที่พัก</a>
+    </p>
+    @if (Model.Count == 0) {
+        <p>ยังไม่มีโรงแรมในระบบ</p>
+    } else {
+        <div class="surface table-scroll history-panel">
+            <table class="ledger-table">
+                <thead><tr><th scope="col">โรงแรม</th><th scope="col">จังหวัด</th><th scope="col">ราคาต่อคืน</th><th scope="col">สถานะ</th><th scope="col">จัดการ</th></tr></thead>
+                <tbody>
+                    @foreach (var hotel in Model) {
+                        <tr>
+                            <th scope="row">@hotel.Name</th>
+                            <td>@hotel.City</td>
+                            <td>฿@hotel.Price.ToString("N0")</td>
+                            <td>@(hotel.IsActive ? "แสดงบนหน้าเว็บ" : "ซ่อนจากหน้าเว็บ")</td>
+                            <td>
+                                <div class="role-inline">
+                                    <a class="stay-button secondary small-button" asp-action="Edit" asp-route-id="@hotel.Id">แก้ไข<span class="visually-hidden"> @hotel.Name</span></a>
+                                    @if (hotel.IsActive) {
+                                        <a class="stay-button secondary small-button" asp-action="Archive" asp-route-id="@hotel.Id">นำออก<span class="visually-hidden"> @hotel.Name</span></a>
+                                    } else {
+                                        <form method="post" asp-action="Restore" asp-route-id="@hotel.Id">
+                                            <button class="stay-button secondary small-button" type="submit">เปิดแสดงอีกครั้ง<span class="visually-hidden"> @hotel.Name</span></button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

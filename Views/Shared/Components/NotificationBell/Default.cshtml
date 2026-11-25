@@ -1,0 +1,5 @@
+@model int
+<a class="@(Model > 0 ? "notify-bell has-unread" : "notify-bell")" asp-controller="Notifications" asp-action="Index" aria-label="การแจ้งเตือน @(Model > 0 ? Model + " รายการที่ยังไม่อ่าน" : "")" title="การแจ้งเตือน">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 15.4A1 1 0 0 0 5.2 17h13.6a1 1 0 0 0 .9-1.6L18 12.6V9a6 6 0 0 0-6-6Zm-2.5 15.5a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    @if (Model > 0) { <span class="notify-count">@(Model > 99 ? "99+" : Model.ToString())</span> }
+</a>

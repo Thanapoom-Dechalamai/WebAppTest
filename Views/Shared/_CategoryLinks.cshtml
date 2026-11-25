@@ -1,0 +1,16 @@
+@using Nontiwat_7362_L002.Models
+@model IReadOnlyList<HotelCardViewModel>
+@* Atmosphere icons as links into the hotel list (/Stays?category=…). ViewData["Current"] marks the chosen one; ViewData["Base"] keeps other filters. *@
+@{
+    var current = ViewData["Current"] as string;
+    var hrefFor = ViewData["HrefFor"] as Func<string?, string> ?? (key => key is null ? "/Stays" : "/Stays?category=" + key);
+    var shortLabels = new Dictionary<string, string> { ["beach"] = "ใกล้ทะเล", ["forest"] = "ใกล้ป่า", ["mountain"] = "ภูเขา", ["city"] = "ในเมือง", ["river"] = "ริมแม่น้ำ", ["garden"] = "ในสวน", ["lake"] = "ทะเลสาบ", ["ricefield"] = "ทุ่งนา", ["pool"] = "มีสระว่ายน้ำ", ["airport"] = "ใกล้สนามบิน", ["shopping"] = "ใกล้ช้อปปิ้ง", ["golf"] = "สนามกอล์ฟ" };
+}
+<nav class="environment-categories category-links" aria-label="บรรยากาศที่พัก">
+    <a class="environment-category@(string.IsNullOrEmpty(current) ? " active" : "")" href="@hrefFor(null)" aria-current="@(string.IsNullOrEmpty(current) ? "page" : null)"><partial name="_CategoryIcon" model="@("all")" /><span class="env-label">ทั้งหมด</span><small class="category-count">@Model.Count ที่พัก</small></a>
+    @foreach (var item in StayEnvironmentOptions.DiscoveryCategories) {
+        var n = Model.Count(h => HotelMatching.InCategory(h, item.Key));
+        if (n == 0) { continue; }
+        <a class="environment-category@(current == item.Key ? " active" : "")" href="@hrefFor(item.Key)" title="@item.Value" aria-current="@(current == item.Key ? "page" : null)"><partial name="_CategoryIcon" model="@item.Key" /><span class="env-label">@(shortLabels.TryGetValue(item.Key, out var s) ? s : item.Value)</span><small class="category-count">@n ที่พัก</small></a>
+    }
+</nav>

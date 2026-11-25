@@ -1,4 +1,4 @@
-namespace Nuttawat_7324_L002.Models;
+namespace Nontiwat_7362_L002.Models;
 
 public class ErrorViewModel
 {

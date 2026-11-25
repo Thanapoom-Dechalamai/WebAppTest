@@ -1,0 +1,4 @@
+@model HotelCardViewModel
+@* The page's main photo passes PhotoEager so it loads first; cards and lists stay lazy. *@
+@{ var eager = ViewData["PhotoEager"] is true; }
+<img src="@Model.ImageUrl" alt="@Model.Name" width="480" height="300" loading="@(eager ? "eager" : "lazy")" fetchpriority="@(eager ? "high" : null)" onerror="this.onerror=null;this.src='/images/stay/photo-pending.svg';this.alt='ไม่สามารถโหลดรูปที่พัก';" />

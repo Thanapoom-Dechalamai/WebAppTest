@@ -1,0 +1,43 @@
+@model ReviewReplyPage
+@using Nontiwat_7362_L002.Services
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ตอบรีวิว"; var hotelId = Model.Hotel?.Id ?? ""; var unanswered = Model.Filter == ReviewReplyPage.Unanswered; }
+<section class="stay-container commerce-page review-replies"><partial name="_RoleNavigation" />
+<h1>ตอบรีวิว</h1>
+<p class="lead-note">คำตอบของโรงแรมจะแสดงใต้รีวิวในหน้าที่พัก หัวข้อ "ตอบกลับจากที่พัก" ผู้เข้าพักจริงจะได้รับแจ้งเตือนเมื่อโรงแรมตอบครั้งแรก</p>
+<partial name="_CommerceMessage" />
+<div class="guests-toolbar"><a class="back-link" asp-action="Index">กลับไปหน้างานการจอง</a>@if (Model.Hotel is not null) { <a class="back-link" asp-controller="Stays" asp-action="Details" asp-route-id="@hotelId" asp-fragment="reviews">ดูรีวิวในหน้าที่พัก</a> }</div>
+@if (Model.Hotel is null) {
+    <div class="surface"><p>บัญชีนี้ยังไม่อยู่ในทีมโรงแรมใด ให้ Admin เพิ่มเข้าทีมก่อน</p></div>
+} else {
+    <form method="get" asp-action="Reviews" class="surface review-reply-filters">
+        @if (Model.Hotels.Count > 1) { <label>โรงแรม<select name="hotelId" onchange="this.form.submit()">@foreach (var h in Model.Hotels) { <option value="@h.Id" selected="@(h.Id == hotelId)">@h.Name · @h.City</option> }</select></label> } else { <input type="hidden" name="hotelId" value="@hotelId" /><p class="reply-hotel"><strong>@Model.Hotel.Name</strong> · @Model.Hotel.City</p> }
+        <fieldset class="reply-filter"><legend class="visually-hidden">แสดงรีวิว</legend>
+            <label><input type="radio" name="filter" value="unanswered" checked="@unanswered" onchange="this.form.submit()" /> ยังไม่ตอบ (@Model.UnansweredCount.ToString("N0"))</label>
+            <label><input type="radio" name="filter" value="all" checked="@(!unanswered)" onchange="this.form.submit()" /> ทั้งหมด (@Model.Total.ToString("N0"))</label>
+        </fieldset>
+        <noscript><button class="stay-button secondary" type="submit">แสดง</button></noscript>
+    </form>
+    <p class="reply-summary">รีวิวที่ยังไม่ตอบ <strong>@Model.UnansweredCount.ToString("N0")</strong> รายการ · แสดงสูงสุด @ReviewReplyPage.PageSize รายการ เรียงจากใหม่ไปเก่า</p>
+    @if (Model.Items.Count == 0) { <div class="surface"><p>@(unanswered ? "ตอบรีวิวครบทุกรายการแล้ว" : "โรงแรมนี้ยังไม่มีรีวิว")</p></div> }
+    <div class="reply-list">
+    @foreach (var r in Model.Items) {
+        <article class="surface reply-card" id="review-@r.Id">
+            <header class="reply-card-head">
+                <div><strong>@r.ReviewerName</strong> <small>· @ReviewOptions.TravelerLabel(r.TravelerType) · รีวิวเมื่อ @ThaiDates.Long(r.CreatedAtUtc.AddHours(7))</small></div>
+                <div class="reply-badges"><span class="review-badge">@r.Rating ดาว</span><span class="pill">ผู้เข้าพักจริง</span>@if (r.ReplyBody is null) { <span class="pill reply-waiting">ยังไม่ตอบ</span> }</div>
+            </header>
+            <h2>@r.Title</h2>
+            <p class="reply-review-body">@r.Body</p>
+            <form method="post" asp-action="Reply" class="reply-form">
+                <input type="hidden" name="reviewId" value="@r.Id" /><input type="hidden" name="filter" value="@Model.Filter" />
+                <label for="reply-@r.Id">@(r.ReplyBody is null ? "คำตอบจากที่พัก" : "แก้ไขคำตอบจากที่พัก")</label>
+                <textarea id="reply-@r.Id" name="body" rows="3" maxlength="1000" required aria-describedby="reply-help-@r.Id">@r.ReplyBody</textarea>
+                <small id="reply-help-@r.Id" class="special-help">สุภาพ สั้น และตอบเรื่องที่ผู้เข้าพักพูดถึง · ไม่เกิน 1,000 ตัวอักษร @if (r.ReplyAtUtc is DateTime at) { <text>· ตอบล่าสุด @ThaiDates.Long(at.AddHours(7))</text> }</small>
+                <div class="reply-actions"><button class="stay-button" type="submit">@(r.ReplyBody is null ? "ส่งคำตอบ" : "บันทึกการแก้ไข")</button>
+                    @if (r.ReplyBody is not null) { <button class="stay-button secondary" type="submit" formaction="@Url.Action("DeleteReply")" formnovalidate onclick="return confirm('ลบคำตอบนี้ออกจากหน้าที่พัก?')">ลบคำตอบ</button> }</div>
+            </form>
+        </article>
+    }
+    </div>
+}
+</section>

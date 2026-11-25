@@ -1,0 +1,18 @@
+@model WalletPage
+@{ Layout = "_StayLayout"; ViewData["Title"] = "เครดิตของฉัน"; }
+<section class="stay-container commerce-page">
+    <h1>เครดิตของฉัน</h1><p class="lead-note">เติมเครดิต วางแผนทริป แล้วชำระค่าที่พักในที่เดียว</p>
+    <partial name="_CommerceMessage" />
+    <div class="account-columns">
+        <div class="wallet-side"><aside class="wallet-card"><p>ยอดคงเหลือที่ใช้จองได้</p><strong>฿@Model.Balance.ToString("N2")</strong><p>เครดิตนี้ใช้ได้ในระบบทดลอง Lodgo เท่านั้น<br />ไม่มีการโอนเงินหรือหักเงินจริง</p><a class="stay-button secondary" asp-controller="Account" asp-action="Index" asp-fragment="hotels">เลือกที่พัก</a></aside><a class="stay-button secondary wallet-history-link" href="/Member/CreditHistory">ดูประวัติเครดิตทั้งหมด</a></div>
+        <form class="surface form-stack" method="post" asp-action="TopUp">
+            <h2>เติมเครดิต</h2><p class="muted">ระบุจำนวน กดยืนยัน แล้วเครดิตจะเข้าบัญชีทันที</p>
+            <div asp-validation-summary="All" class="validation-errors" role="alert"></div>
+            <input asp-for="Form.RequestId" type="hidden" />
+            <label>จำนวนเงิน (บาท)<input asp-for="Form.Amount" type="number" min="100" max="50000" step="0.01" required /></label>
+            <div class="amount-options"><button type="button" data-amount="1000">฿1,000</button><button type="button" data-amount="3000">฿3,000</button><button type="button" data-amount="10000">฿10,000</button><button type="button" data-amount="30000">฿30,000</button></div>
+            <div class="simulation-box"><strong>ไม่ต้องใช้บัญชีธนาคาร</strong><p>ไม่ต้องกรอกเลขบัญชีหรือแนบสลิป กดยืนยันแล้วระบบจะเพิ่มเครดิตให้ทันที</p></div>
+            <button class="stay-button" type="submit">ยืนยันและเติมเครดิต</button><p class="muted">ครั้งละ 100–50,000 บาท · ยอดสูงสุดก่อนเติม 1,000,000 บาท</p>
+        </form>
+    </div>
+</section>

@@ -1,0 +1,11 @@
+@* Shown (status 404) when a slip, proof or attachment is on record but its file is no longer on the server (D, 2026-11-25). *@
+@{
+    Layout = "_StayLayout";
+    ViewData["Title"] = "ไม่พบไฟล์";
+}
+<section class="stay-container commerce-page file-missing">
+    <h1>ไม่พบไฟล์นี้บนเซิร์ฟเวอร์</h1>
+    <p class="lead-note">รายการนี้มีไฟล์แนบบันทึกไว้ แต่ตัวไฟล์ไม่อยู่ในเครื่องเซิร์ฟเวอร์แล้ว อาจถูกย้ายหรือยังไม่ได้กู้คืนจากข้อมูลสำรอง
+        แจ้งผู้ดูแลระบบเพื่อกู้ไฟล์ หรือขอให้ผู้ส่งแนบไฟล์ใหม่อีกครั้ง</p>
+    <p><a class="stay-button secondary" asp-controller="Account" asp-action="Index">กลับหน้าแรก</a></p>
+</section>

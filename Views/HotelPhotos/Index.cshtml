@@ -1,0 +1,62 @@
+@model HotelPhotoPage
+@{
+    Layout = "_StayLayout";
+    var hotel = Model.Hotel;
+    var room = Model.Room;
+    ViewData["Title"] = room is null ? "รูปภาพและแกลเลอรี" : "รูปประเภทห้อง";
+}
+<section class="stay-container commerce-page">
+    <h1>@ViewData["Title"] · @(room?.Name ?? hotel.Name)</h1>
+    <partial name="_CommerceMessage" />
+    <form class="surface form-stack hotel-catalog-editor" method="post" enctype="multipart/form-data"
+          asp-action="Add" asp-route-id="@hotel.Id" asp-route-roomId="@room?.Id">
+        <div asp-validation-summary="ModelOnly" class="validation-errors"></div>
+        <div><label asp-for="Form.Url"></label><input asp-for="Form.Url" inputmode="url" /><span asp-validation-for="Form.Url" class="field-error"></span></div>
+        <div>
+            <label asp-for="Form.Upload"></label><input asp-for="Form.Upload" type="file" accept="image/jpeg,image/png" aria-describedby="file-hint" />
+            <small id="file-hint">เลือกไฟล์ JPG หรือ PNG ขนาดไม่เกิน 5 MB หากไม่ได้ใช้ URL</small>
+            <span asp-validation-for="Form.Upload" class="field-error"></span>
+        </div>
+        <div><label asp-for="Form.Credit"></label><input asp-for="Form.Credit" /><span asp-validation-for="Form.Credit" class="field-error"></span></div>
+        <div class="role-inline">
+            <button class="stay-button" type="submit">เพิ่มรูปภาพ</button>
+            @if (room is null) {
+                <a class="stay-button secondary" asp-controller="HotelCatalog" asp-action="Edit" asp-route-id="@hotel.Id">กลับหน้าแก้ไขโรงแรม</a>
+            } else {
+                <a class="stay-button secondary" asp-controller="HotelRooms" asp-action="Index" asp-route-id="@hotel.Id">กลับหน้าประเภทห้อง</a>
+            }
+        </div>
+    </form>
+    @if (room is null && !string.IsNullOrEmpty(hotel.PhotoUrl) && Model.Photos.All(photo => photo.Url != hotel.PhotoUrl)) {
+        <figure class="hotel-current-photo">
+            <img src="@hotel.PhotoUrl" alt="@hotel.Name" />
+            <figcaption>รูปหลักปัจจุบัน</figcaption>
+        </figure>
+    }
+    @if (Model.Photos.Count == 0) {
+        <p>ยังไม่มีรูปเพิ่มเติม</p>
+    } else {
+        <div class="hotel-photo-grid">
+            @foreach (var photo in Model.Photos) {
+                <article>
+                    <img src="@photo.Url" alt="@(room?.Name ?? hotel.Name)" loading="lazy" />
+                    @if (!string.IsNullOrWhiteSpace(photo.Credit)) { <p>@photo.Credit</p> }
+                    <div class="role-inline">
+                        @if (room is null && hotel.PhotoUrl == photo.Url) {
+                            <span>รูปหลัก</span>
+                        } else if (room is null) {
+                            <form method="post" asp-action="Main" asp-route-id="@hotel.Id">
+                                <input type="hidden" name="photoId" value="@photo.Id" />
+                                <button type="submit" class="stay-button secondary small-button">ตั้งเป็นรูปหลัก</button>
+                            </form>
+                        }
+                        <form method="post" asp-action="Remove" asp-route-id="@hotel.Id" asp-route-roomId="@room?.Id">
+                            <input type="hidden" name="photoId" value="@photo.Id" />
+                            <button type="submit" class="stay-button secondary small-button">นำรูปออก</button>
+                        </form>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>

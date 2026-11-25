@@ -1,61 +1,65 @@
-@model List<MemberOffer>
-@using System.Security.Claims
+@model AccountIndexViewModel
+@using Nontiwat_7362_L002.Models
 @{
-    Layout = "_LayoutUser";
-    ViewData["Title"] = "บัญชีของฉัน";
-
-    var displayName = User.Identity?.Name ?? "สมาชิก";
-    var email = User.FindFirstValue(ClaimTypes.Email) ?? "ไม่พบอีเมล";
-    var role = User.FindFirstValue(ClaimTypes.Role) ?? "Member";
+    Layout = "_StayLayout";
+    ViewData["Title"] = "ที่พักทั่วประเทศไทย";
+    var cities = Model.Hotels.Select(h => h.City).Distinct().OrderBy(city => city, StringComparer.Create(new System.Globalization.CultureInfo("th-TH"), false)).ToList();
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    // Home shows the four main atmospheres as sliding rows (owner's choice 2026-11-22); best rated first, ten per row.
+    // Every other atmosphere is in the icon bar above the rows and on the hotel list.
+    string[] mainRows = ["beach", "mountain", "city", "garden"];
+    var all = StayEnvironmentOptions.DiscoveryCategories
+        .Select(c => (c.Key, Label: c.Value, Hotels: Model.Hotels.Where(h => HotelMatching.InCategory(h, c.Key)).ToList()))
+        .Where(r => r.Hotels.Count > 0).ToList();
+    var rows = mainRows.Select(k => all.FirstOrDefault(r => r.Key == k)).Where(r => r.Key is not null).ToList();
 }
-
-
-<section class="dash">
-    <header class="dash-header">
-        <div><p class="dash-kicker">CustomShop</p><h1>บัญชีของฉัน</h1><p class="dash-subtitle">@displayName</p></div>
-        <div class="dash-actions">
-            @if (ShopAccess.DashboardFor(User) is { } dashboard)
-            {
-                <a class="dash-button" asp-controller="@dashboard.Controller" asp-action="Index">@dashboard.Label Dashboard</a>
-            }
-            <form asp-controller="Account" asp-action="Logout" method="post"><button class="dash-button">ออกจากระบบ</button></form>
-        </div>
-    </header>
-    @if (ShopAccess.CanBuy(User))
-    {
-        <nav class="dash-actions" aria-label="บริการสำหรับสมาชิก">
-            <a class="dash-button is-primary" asp-controller="Cart" asp-action="History">ประวัติการสั่งซื้อ</a>
-            <a class="dash-button" asp-controller="Cart" asp-action="Quotes">คำขอประเมินราคา</a>
-            <a class="dash-button" asp-controller="Home" asp-action="Product">เลือกซื้อสินค้า</a>
-        </nav>
-    }
-    <section class="dash-panel" aria-labelledby="member-details">
-        <header class="dash-panel-heading"><h2 id="member-details">ข้อมูลบัญชี</h2></header>
-        <dl class="dash-profile"><div><dt>อีเมล</dt><dd>@email</dd></div><div><dt>สิทธิ์การใช้งาน</dt><dd>@role</dd></div></dl>
-    </section>
-    @if (ShopAccess.CanBuy(User))
-    {
-        <section class="dash-panel" aria-labelledby="member-offers">
-            <header class="dash-panel-heading"><h2 id="member-offers">โค้ดส่วนลดของฉัน</h2></header>
-            <div class="dash-panel-body">
-                @if (TempData["OfferMessage"] is string message) { <p class="dash-notice" role="status">@message</p> }
-                <form asp-controller="Account" asp-action="SaveOffer" method="post" class="dash-actions">
-                    <label class="dash-field">โค้ดจากหน้าโปรโมชัน <input name="code" maxlength="40" required /></label>
-                    <button class="dash-button" type="submit">บันทึกโค้ด</button>
-                </form>
-            </div>
-            @if (Model.Count == 0) { <p class="dash-empty">ยังไม่มีโค้ดที่บันทึก</p> }
-            @foreach (var offer in Model)
-            {
-                <article class="dash-task">
-                    <div><strong>@offer.Code</strong><p class="dash-subtitle">@offer.Description</p></div>
-                    @if (offer.PackageId.HasValue)
-                    {
-                        <form asp-controller="Cart" asp-action="RequestQuote" method="post"><input type="hidden" name="id" value="@offer.PackageId" /><button class="dash-button">ขอประเมินราคา</button></form>
-                    }
-                    else { <a class="dash-button" asp-controller="Cart" asp-action="Index">ใช้โค้ดที่ตะกร้า</a> }
-                </article>
-            }
-        </section>
-    }
+<section class="a-hero" aria-labelledby="page-title">
+    <img class="a-hero-photo" src="~/images/hotels/th-stay-048.jpg" alt="The Nai Harn ภูเก็ต" width="1600" height="900" onerror="this.onerror=null;this.src='/images/stay/photo-pending.svg';" />
+    <div class="stay-container a-hero-copy">
+        <h1 id="page-title">ที่พักที่เลือกมาแล้ว<br />ทั่วประเทศไทย</h1>
+        <p>@Model.Hotels.Count ที่พักใน @cities.Count จังหวัด ข้อมูลบรรยากาศและรูปจากแหล่งจริง</p>
+    </div>
+    <a class="a-hero-down" href="#hotels" aria-label="เลื่อนลงไปดูที่พัก"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M6 13l6 6 6-6" /></svg></a>
 </section>
+<div class="stay-container">
+    <partial name="_SearchBar" model="cities" />
+</div>
+<div class="stay-container main-sections">
+    <section id="hotels" class="hotel-rows" aria-label="ที่พักตามบรรยากาศ">
+        <partial name="_CategoryLinks" model="Model.Hotels" />
+        @foreach (var row in rows) {
+            var top = row.Hotels.OrderByDescending(h => h.ReviewScore ?? 0).ThenByDescending(h => h.ReviewCount).Take(10).ToList();
+            <section class="hotel-row" aria-labelledby="row-@row.Key">
+                <div class="row-head">
+                    <h2 id="row-@row.Key">@row.Label</h2>
+                    <a class="a-text-link row-more" href="/Stays?category=@row.Key">แสดงเพิ่มเติม (@row.Hotels.Count)<span class="visually-hidden"> @row.Label</span></a>
+                </div>
+                <div class="row-scroller">
+                    <button class="row-arrow row-prev" type="button" aria-label="เลื่อนดูที่พักก่อนหน้า · @row.Label" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6" /></svg></button>
+                    <ul class="row-track">
+                        @foreach (var h in top) {
+                            <li>
+                                <article class="row-hotel">
+                                    <div class="row-photo">
+                                        <a class="row-photo-link" asp-controller="Stays" asp-action="Details" asp-route-id="@h.Id" tabindex="-1" aria-hidden="true"><partial name="_HotelPhoto" model="h" /></a>
+                                        <span class="row-city"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.2" /></svg>@h.City</span>
+                                        <partial name="_WishlistButton" model="h.Id" />
+                                    </div>
+                                    <h3><a asp-controller="Stays" asp-action="Details" asp-route-id="@h.Id">@h.Name</a></h3>
+                                    @if (h.ReviewScore is double score) {
+                                        <p class="row-rating"><span class="rating-stars" aria-hidden="true">@for (var i = 0; i < 5; i++) { <svg viewBox="0 0 24 24" class="@(i < (int)Math.Round(score) ? "on" : "")"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" /></svg> }</span><span>@score.ToString("0.0", inv) / 5 · @h.ReviewCount.ToString("N0") รีวิว</span></p>
+                                    } else {
+                                        <p class="row-rating"><span>ยังไม่มีรีวิว</span></p>
+                                    }
+                                    <p class="row-price">@if (h.StartingRate is decimal rate) { <text>฿@rate.ToString("#,##0.##") <span>/ คืน</span></text> } else { <span>ยังไม่เปิดจอง</span> }</p>
+                                </article>
+                            </li>
+                        }
+                    </ul>
+                    <button class="row-arrow row-next" type="button" aria-label="เลื่อนดูที่พักถัดไป · @row.Label" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" /></svg></button>
+                </div>
+            </section>
+        }
+        <p class="rows-all"><a class="stay-button secondary" href="/Stays">ดูที่พักทั้งหมด</a></p>
+    </section>
+</div>

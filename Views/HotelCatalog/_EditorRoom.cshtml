@@ -1,0 +1,26 @@
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@model HotelEditorRoom
+<fieldset class="hotel-editor-room" data-room-row>
+    <legend data-room-heading>@(string.IsNullOrWhiteSpace(Model.Name) ? "ประเภทห้องใหม่" : Model.Name)</legend>
+    <input asp-for="Id" type="hidden" />
+    <div class="form-pair">
+        <div><label asp-for="Name"></label><input asp-for="Name" required /><span asp-validation-for="Name" class="field-error"></span></div>
+        <div><label asp-for="Price"></label><input asp-for="Price" type="number" min="1" step="0.01" required /><span asp-validation-for="Price" class="field-error"></span></div>
+        <div><label asp-for="BedType"></label><input asp-for="BedType" placeholder="เช่น เตียงเดี่ยว หรือเตียงคิงไซส์" /></div>
+        <div><label asp-for="BedCount"></label><input asp-for="BedCount" type="number" min="1" max="20" /></div>
+        <div><label asp-for="SizeSquareMeters"></label><input asp-for="SizeSquareMeters" type="number" min="1" /></div>
+        <div><label asp-for="Capacity">จำนวนห้องที่เปิดขายตามปกติ</label><input asp-for="Capacity" type="number" min="0" max="@RoomCapacity.Max" required /></div>
+    </div>
+    <div><label asp-for="Features"></label><textarea asp-for="Features" rows="3"></textarea></div>
+    <fieldset>
+        <legend>รูปของห้องประเภทนี้</legend>
+        @await Html.PartialAsync("_EditorGallery", Model.Gallery, new ViewDataDictionary(ViewData)
+        {
+            TemplateInfo = { HtmlFieldPrefix = ViewData.TemplateInfo.GetFullHtmlFieldName(nameof(Model.Gallery)) }
+        })
+    </fieldset>
+    <div class="role-toolbar">
+        <div><label asp-for="IsActive">สถานะการขาย</label><select asp-for="IsActive"><option value="true">เปิดขาย</option><option value="false">ปิดขาย</option></select></div>
+        @if (Model.Id is null) { <button class="stay-button secondary" type="button" data-room-remove>นำห้องที่ยังไม่ได้บันทึกออก</button> }
+    </div>
+</fieldset>

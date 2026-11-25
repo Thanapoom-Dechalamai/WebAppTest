@@ -1,0 +1,62 @@
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@inject Nontiwat_7362_L002.Data.ApplicationDbContext NavbarDb
+@{
+    var email = User.Identity?.IsAuthenticated == true ? User.Identity.Name : null;
+    MemberWallet? wallet = null;
+    ApplicationUser? member = null;
+    var favouriteCount = 0;
+    if (email is not null && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var memberId)) {
+        wallet = await NavbarDb.Wallets.AsNoTracking().SingleOrDefaultAsync(x => x.UserId == memberId);
+        member = await NavbarDb.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == memberId);
+        if (AppRoles.CanBook(User)) favouriteCount = await NavbarDb.Wishlists.AsNoTracking().CountAsync(x => x.UserId == memberId);
+    }
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    bool On(string c, string? a = null) => controller == c && (a is null || action == a);
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var canBook = !signedIn || AppRoles.CanBook(User);
+}
+<header class="stay-header a-header">
+    <nav class="stay-container stay-nav" aria-label="เมนูหลัก">
+        <a class="a-wordmark" asp-controller="Account" asp-action="Index" aria-label="Lodgo หน้าแรก">Lodgo</a>
+        <button class="menu-toggle" type="button" aria-controls="stay-navigation" aria-expanded="false" aria-label="เปิดเมนู">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+        <div class="stay-navigation" id="stay-navigation">
+            <div class="stay-links">
+                <a class="@(On("Stays","Index") || On("Stays","Details") ? "is-active" : "")" href="/Stays">ที่พัก</a>
+                @if (canBook) { <a class="@(On("Stays","Bookings") || On("Stays","Order") ? "is-active" : "")" asp-controller="Stays" asp-action="Bookings">การจองของฉัน</a> }
+                @if (signedIn && AppRoles.CanBook(User)) { <a class="@(On("Support") ? "is-active" : "")" href="/Support">แชตกับเจ้าหน้าที่</a> }
+                <a class="@(On("Customer","Promotions") ? "is-active" : "")" asp-controller="Customer" asp-action="Promotions">โปรโมชั่น</a>
+                <a class="@(On("Account","Help") ? "is-active" : "")" asp-controller="Account" asp-action="Help">ช่วยเหลือ</a>
+                @if (User.IsInRole(AppRoles.Owner) || User.IsInRole(AppRoles.Admin)) { <a class="@(On("Home","Guide") ? "is-active" : "")" asp-controller="Home" asp-action="Guide">คู่มือระบบ</a> }
+            </div>
+            <div class="stay-account">
+                @if (signedIn && AppRoles.CanBook(User)) {
+                    <a class="a-icon-link @(On("Wishlist") ? "is-active" : "")" asp-controller="Wishlist" asp-action="Index" aria-label="รายการโปรด มี @favouriteCount ที่พัก">
+                        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                        <span>รายการโปรด</span>@if (favouriteCount > 0) { <span class="a-count">@favouriteCount</span> }
+                    </a>
+                }
+                @if (!string.IsNullOrWhiteSpace(email))
+                {
+                    <text>@await Component.InvokeAsync("NotificationBell")</text>
+                    <div class="member-details">
+                        <a class="member-email" asp-controller="Member" asp-action="Profile" title="@email">@(string.IsNullOrWhiteSpace($"{member?.FirstName} {member?.LastName}") ? email : $"{member?.FirstName} {member?.LastName}".Trim())</a>
+                        @if (AppRoles.CanBook(User)) { <a class="member-credit" asp-controller="Member" asp-action="Wallet">เครดิต ฿@((wallet?.Balance ?? 0).ToString("N2"))</a> } else { <span class="member-credit">@AppRoles.Label(AppRoles.Current(User))</span> }
+                    </div>
+                    <a class="a-text-link member-switch" asp-controller="Account" asp-action="Login" asp-route-switchAccount="true">เปลี่ยนบัญชี</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post"><button class="stay-button secondary small-button" type="submit">ออกจากระบบ</button></form>
+                    @* Back-office staff: their workspace sits at the far right of the bar *@
+                    @if (!AppRoles.CanBook(User) || User.IsInRole("Admin")) { <a class="stay-button small-button a-workspace" asp-controller="@AppRoles.HomeController(AppRoles.Current(User))" asp-action="Index">หน้างานของฉัน</a> }
+                }
+                else
+                {
+                    <a class="a-text-link" asp-controller="Account" asp-action="Login">เข้าสู่ระบบ</a>
+                    <a class="stay-button" asp-controller="Account" asp-action="Register">สมัครสมาชิก</a>
+                }
+            </div>
+        </div>
+    </nav>
+</header>

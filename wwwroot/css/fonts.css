@@ -1,0 +1,19 @@
+/* Lodgo fonts, self-hosted. Free non-commercial editions from Fontcraft, one weight each:
+   FC Mittraphap Rounded (heavy, rounded) = brand wordmark + h1; FC Mee Sakul Bold = headings, prices, big numbers.
+   Body text stays IBM Plex Sans Thai. The full families (all weights) are a paid licence, see /fonts/*LICENSE.txt.
+   The weight range below tells the browser this one face covers every weight, so it never fakes bold. */
+@font-face {
+  font-family:"FC Mittraphap Rounded";
+  src:url("../fonts/fc-mittraphap-rounded.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+@font-face {
+  font-family:"FC Mee Sakul";
+  src:url("../fonts/fc-mee-sakul-bold.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+:root {
+  --font-brand:"FC Mittraphap Rounded", "IBM Plex Sans Thai", system-ui, sans-serif;
+  --font-heading:"FC Mee Sakul", "IBM Plex Sans Thai", system-ui, sans-serif;
+  --font-body:"IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+}

@@ -1,0 +1,62 @@
+@model HotelPage
+@{ var r = Model.Reviews!; var q = r.Query; var hotelId = Model.Hotel.Id; }
+<section class="review-section" id="reviews" aria-labelledby="reviews-title">
+    <div class="section-heading"><div><h2 id="reviews-title">รีวิวจากผู้เข้าพัก</h2></div></div>
+    @if (Model.Invite is { } invite) {
+        <div class="surface review-invite review-invite-@invite.State">
+            @switch (invite.State) {
+                case ReviewInvite.Ready:
+                    <div><strong>คุณเข้าพักที่นี่เสร็จแล้ว</strong><p>เล่าประสบการณ์ให้ผู้เข้าพักคนต่อไป รีวิวของคุณจะติดป้าย "เข้าพักจริงผ่าน Lodgo"</p></div>
+                    <a class="stay-button" asp-action="Review" asp-route-id="@invite.OrderId.ToString()">เขียนรีวิว</a>
+                    break;
+                case ReviewInvite.Upcoming:
+                    <div><strong>คุณมีการจองที่นี่</strong><p>เขียนรีวิวได้หลังโรงแรมบันทึกเช็กเอาต์ ระบบจะแจ้งเตือนเมื่อพร้อม</p></div>
+                    <a class="stay-button secondary" asp-action="Bookings">ดูการจองของฉัน</a>
+                    break;
+                case ReviewInvite.Reviewed:
+                    <div><strong>คุณรีวิวที่พักนี้แล้ว</strong><p>ขอบคุณที่ช่วยผู้เข้าพักคนอื่นตัดสินใจ</p></div>
+                    break;
+                default:
+                    <div><strong>อยากรีวิวที่พักนี้?</strong><p>รีวิวได้หลังเข้าพักที่นี่ผ่าน Lodgo และโรงแรมบันทึกเช็กเอาต์แล้ว เพื่อให้ทุกรีวิวมาจากผู้เข้าพักจริง</p></div>
+                    break;
+            }
+        </div>
+    }
+    @if (r.Total == 0) { <div class="surface empty-reviews"><h3>ยังไม่มีรีวิว</h3><p>ผู้เข้าพักที่เข้าพักเสร็จแล้วสามารถเขียนรีวิวได้จากหน้า "การจองของฉัน"</p></div> } else {
+    <div class="surface review-summary">
+        <div class="review-score"><strong>@r.Average.ToString("0.0")</strong><span>/ 5</span><b>@ReviewOptions.ScoreLabel(r.Average)</b><small>จาก @r.Total.ToString("N0") รีวิว</small></div>
+        <div class="review-bars" aria-label="จำนวนรีวิวแยกตามดาว">@for (var s = 5; s >= 1; s--) { var count = r.StarCounts[s]; var pct = r.Total == 0 ? 0 : count * 100.0 / r.Total;
+            <a class="review-bar @(q.Stars == s ? "is-active" : "")" asp-action="Details" asp-route-id="@hotelId" asp-route-rstars="@(q.Stars == s ? "" : s.ToString())" asp-route-rtype="@q.Type" asp-route-rsort="@q.Sort" asp-fragment="reviews"><span>@s ดาว</span><i><em style="width:@pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></em></i><small>@count</small></a> }</div>
+        <div class="review-aspects">@foreach (var (key, label) in ReviewOptions.Aspects) { var v = r.AspectAverages.GetValueOrDefault(key);
+            <div><span>@label</span><i><em style="width:@((v * 20).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></em></i><strong>@v.ToString("0.0")</strong></div> }</div>
+    </div>
+    <form method="get" asp-action="Details" asp-route-id="@hotelId" asp-fragment="reviews" class="review-filters">
+        <label>คะแนน<select name="rstars" onchange="this.form.submit()"><option value="">ทุกคะแนน</option>@for (var s = 5; s >= 1; s--) { <option value="@s" selected="@(q.Stars == s)">@s ดาว (@r.StarCounts[s])</option> }</select></label>
+        <label>ประเภทผู้เข้าพัก<select name="rtype" onchange="this.form.submit()"><option value="">ทุกประเภท</option>@foreach (var t in ReviewOptions.TravelerTypes) { <option value="@t.Key" selected="@(q.Type == t.Key)">@t.Value (@r.TypeCounts.GetValueOrDefault(t.Key))</option> }</select></label>
+        <label>เรียงตาม<select name="rsort" onchange="this.form.submit()"><option value="recent" selected="@(q.Sort == "recent")">รีวิวล่าสุด</option><option value="high" selected="@(q.Sort == "high")">คะแนนสูงสุด</option><option value="low" selected="@(q.Sort == "low")">คะแนนต่ำสุด</option></select></label>
+        <noscript><button class="stay-button secondary" type="submit">กรอง</button></noscript>
+        <span class="review-count">แสดง @r.MatchCount.ToString("N0") รีวิว</span>
+    </form>
+    <div class="review-list">
+        @foreach (var item in r.Items)
+        {
+            <article class="review-card" id="review-@item.Id">
+                <aside><strong>@item.ReviewerName</strong><small>@item.ReviewerCountry</small><span>@ReviewOptions.TravelerLabel(item.TravelerType)</span><small>@item.RoomName</small><small>เข้าพัก @item.StayedOn.ToString("MM/yyyy")</small></aside>
+                <div>
+                    <div class="review-head"><span class="review-badge">@item.Rating.ToString() <small>/ 5</small></span><h3>@item.Title</h3></div>
+                    <p>@item.Body</p>
+                    <footer><small>รีวิวเมื่อ @item.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy")</small><span class="pill">เข้าพักจริงผ่าน Lodgo</span></footer>
+                    @if (item.ReplyBody is not null) { <div class="review-reply"><p class="review-reply-title">ตอบกลับจากที่พัก @if (item.ReplyAtUtc is DateTime replied) { <small>· @ThaiDates.Long(replied.AddHours(7))</small> }</p><p>@item.ReplyBody</p></div> }
+                </div>
+            </article>
+        }
+        @if (r.Items.Count == 0) { <p class="surface">ไม่มีรีวิวที่ตรงกับตัวกรองนี้ <a asp-action="Details" asp-route-id="@hotelId" asp-fragment="reviews">ล้างตัวกรอง</a></p> }
+    </div>
+    @if (r.PageCount > 1) {
+    <nav class="catalog-pagination review-pages" aria-label="หน้ารีวิว">
+        @if (r.Page > 1) { <a class="stay-button secondary" asp-action="Details" asp-route-id="@hotelId" asp-route-rstars="@q.Stars" asp-route-rtype="@q.Type" asp-route-rsort="@q.Sort" asp-route-rpage="@(r.Page - 1)" asp-fragment="reviews">ก่อนหน้า</a> }
+        <span>หน้า @r.Page / @r.PageCount</span>
+        @if (r.Page < r.PageCount) { <a class="stay-button secondary" asp-action="Details" asp-route-id="@hotelId" asp-route-rstars="@q.Stars" asp-route-rtype="@q.Type" asp-route-rsort="@q.Sort" asp-route-rpage="@(r.Page + 1)" asp-fragment="reviews">ถัดไป</a> }
+    </nav> }
+    }
+</section>

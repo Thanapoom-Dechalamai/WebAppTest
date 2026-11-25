@@ -1,0 +1,18 @@
+@model ReviewFormPage
+@{ Layout = "_StayLayout"; ViewData["Title"] = "เขียนรีวิวที่พัก"; var o = Model.Order; var f = Model.Form;
+   var fields = new[] { ("Rating", "คะแนนภาพรวม", f.Rating), ("Cleanliness", "ความสะอาด", f.Cleanliness), ("Location", "ทำเลที่ตั้ง", f.Location), ("Service", "การบริการ", f.Service), ("Value", "ความคุ้มค่า", f.Value) }; }
+<section class="stay-container commerce-page booking-detail"><a class="back-link" asp-action="Order" asp-route-id="@o.Id">กลับไปที่รายละเอียดการจอง</a>
+    <article class="bd-card review-write">
+        <div class="review-write-head">@if (Model.Hotel is not null) { <div class="trip-photo"><partial name="_HotelPhoto" model="Model.Hotel" /></div> }<div><p class="muted">หมายเลขการจอง LG@(o.Id.ToString("D6")) · @o.CheckIn.ToString("dd/MM/yyyy") – @o.CheckOut.ToString("dd/MM/yyyy")</p><h1>รีวิว @o.HotelName</h1><p class="muted">@o.RoomName · รีวิวจะแสดงในหน้าที่พักพร้อมป้าย "เข้าพักจริงผ่าน Lodgo" แสดงชื่อเป็นชื่อจริงและอักษรแรกของนามสกุล</p></div></div>
+        <form asp-action="Review" method="post" class="form-stack">
+            <div asp-validation-summary="All" class="validation-errors"></div>
+            <input type="hidden" name="OrderId" value="@o.Id" />
+            <div class="star-fields">@foreach (var (name, label, value) in fields) {
+                <fieldset class="star-input"><legend>@label</legend><div class="stars">@for (var s = 5; s >= 1; s--) { <input type="radio" id="@name-@s" name="@name" value="@s" checked="@(value == s)" required /><label for="@name-@s" title="@s ดาว">★</label> }</div></fieldset> }</div>
+            <label>เดินทางแบบไหน<select name="TravelerType" required><option value="">เลือกประเภทผู้เข้าพัก</option>@foreach (var t in ReviewOptions.TravelerTypes) { <option value="@t.Key" selected="@(f.TravelerType == t.Key)">@t.Value</option> }</select></label>
+            <label>หัวข้อรีวิว<input name="Title" value="@f.Title" maxlength="120" placeholder="สรุปประสบการณ์ในประโยคเดียว" required /></label>
+            <label>เล่าประสบการณ์การเข้าพัก<textarea name="Body" rows="6" maxlength="1500" placeholder="ห้องพัก ความสะอาด การบริการ ทำเล หรือสิ่งที่อยากบอกผู้เข้าพักคนต่อไป" required>@f.Body</textarea></label>
+            <button class="stay-button" type="submit">ส่งรีวิว</button>
+        </form>
+    </article>
+</section>

@@ -1,0 +1,24 @@
+<footer class="stay-footer a-footer">
+    <div class="stay-container">
+        <div class="a-footer-grid">
+            <div>
+                <a class="a-wordmark" asp-controller="Account" asp-action="Index" aria-label="Lodgo หน้าแรก">Lodgo</a>
+                <p>ที่พักที่เลือกมาแล้ว ทั่วประเทศไทย</p>
+            </div>
+            <nav aria-label="ลิงก์ท้ายหน้า">
+                <h2>ค้นหา</h2>
+                <a asp-controller="Account" asp-action="Index" asp-fragment="hotels">ที่พักทั้งหมด</a>
+                <a asp-controller="Customer" asp-action="Promotions">โปรโมชั่น</a>
+            </nav>
+            <nav aria-label="ความช่วยเหลือ">
+                <h2>ช่วยเหลือ</h2>
+                <a asp-controller="Account" asp-action="Help">คำถามที่พบบ่อย</a>
+                @if (User.IsInRole(AppRoles.Owner) || User.IsInRole(AppRoles.Admin)) { <a asp-controller="Home" asp-action="Guide">คู่มือระบบ</a> }
+            </nav>
+        </div>
+        <div class="a-footer-bottom">
+            <span>© @DateTime.Now.Year Lodgo · Nontiwat Muensai</span>
+            <span>ระบบจองทดลองสำหรับงานเรียน ชำระด้วยเครดิตที่ใช้ได้เฉพาะในระบบ ไม่ใช่การจองกับโรงแรมจริง</span>
+        </div>
+    </div>
+</footer>

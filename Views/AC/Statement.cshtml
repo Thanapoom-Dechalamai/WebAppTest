@@ -1,0 +1,30 @@
+@model HotelStatementPage
+@{Layout="_StayLayout";var r=Model.Row;ViewData["Title"]="AC · ที่มาของเงิน · "+r.HotelName;}
+<section class="stay-container commerce-page"><partial name="_RoleNavigation" />
+<a class="back-link" asp-action="Settlement">กลับไปสรุปยอดทุกโรงแรม</a>
+<h1>@r.HotelName</h1><p class="lead-note">@Model.City · ที่มาของยอดที่ Lodgo ต้องโอนให้โรงแรมนี้ และประวัติการโอน</p>
+<partial name="_CommerceMessage" />
+<div class="statement-sum surface"><div><span>ลูกค้าจ่ายสำหรับการเข้าพักที่เช็กอินแล้ว</span><strong>฿@r.Earned.ToString("N2")</strong></div><b>−</b><div><span>คอมมิชชั่น Lodgo (ตามอัตราของแต่ละการจอง)</span><strong>฿@r.Commission.ToString("N2")</strong></div><b>=</b><div><span>ต้องโอนให้โรงแรม</span><strong>฿@r.Payable.ToString("N2")</strong></div><b>−</b><div><span>โอนแล้ว</span><strong>฿@r.Paid.ToString("N2")</strong></div><b>=</b><div class="is-due"><span>ค้างโอน</span><strong>฿@r.Outstanding.ToString("N2")</strong></div></div>
+
+@if(r.Outstanding>0){
+<div class="surface payout-panel"><h2>บันทึกการโอนให้โรงแรม</h2><p class="muted">โอนเงินจริงก่อน แล้วบันทึกที่นี่พร้อมเลขอ้างอิงจากธนาคาร ระบบไม่ให้บันทึกเกินยอดค้างโอน</p>
+<form asp-action="RecordPayout" method="post" class="payout-grid"><input type="hidden" name="HotelId" value="@r.HotelId" />
+<label>ยอดโอน (บาท)<input name="Amount" type="number" step="0.01" min="0.01" max="@r.Outstanding.ToString("0.00")" value="@r.Outstanding.ToString("0.00")" required /></label>
+<label>วิธีโอน<select name="Method">@foreach(var m in FinanceRules.PayoutMethods){<option value="@m.Key">@m.Value</option>}</select></label>
+<label>เลขอ้างอิงการโอน<input name="Reference" maxlength="120" placeholder="เช่น เลขที่รายการจากธนาคาร" required /></label>
+<label class="wide">หมายเหตุ (ไม่บังคับ)<input name="Note" maxlength="255" placeholder="เช่น รอบโอนเดือนพฤศจิกายน · บัญชีปลายทางของโรงแรม" /></label>
+<button class="stay-button" type="submit">บันทึกว่าโอนแล้ว</button></form></div>
+}
+
+<div class="surface table-scroll history-panel"><h2>ที่มาของเงิน · การเข้าพักที่เช็กอินแล้ว (@Model.Earned.Count รายการ)</h2><p class="muted">ลูกค้าจ่ายด้วยเครดิตใน wallet หรือโอนเงินที่ Staff ตรวจแล้ว เงินพักอยู่กับ Lodgo จนลูกค้าเช็กอิน</p>
+<table class="ledger-table"><thead><tr><th>การจอง</th><th>ลูกค้า (ผู้จ่าย)</th><th>เข้าพัก</th><th>จ่ายเมื่อ · ช่องทาง</th><th>ลูกค้าจ่าย</th><th>คอมมิชชั่น</th><th>ส่วนของโรงแรม</th></tr></thead><tbody>
+@foreach(var line in Model.Earned){var o=line.Order;<tr><td>LG@(o.Id.ToString("D6"))<br /><small class="muted">@BookingStatus.Label(o.Status)</small></td><td>@line.CustomerName<br /><small class="muted">@line.CustomerEmail</small></td><td>@o.CheckIn.ToString("dd/MM/yyyy") – @o.CheckOut.ToString("dd/MM/yyyy")<br /><small class="muted">@o.RoomName · @o.Rooms ห้อง</small></td><td>@(line.PaidAtUtc?.AddHours(7).ToString("dd/MM/yyyy HH:mm") ?? "—")<br /><small class="muted">เครดิต Lodgo (wallet)@(o.DiscountAmount>0?" · โค้ด "+o.PromotionCode+" −฿"+o.DiscountAmount.ToString("N2"):"")</small></td><td>฿@o.Total.ToString("N2")</td><td class="negative">−฿@line.Commission.ToString("N2")</td><td><strong>฿@line.HotelShare.ToString("N2")</strong></td></tr>}
+@if(Model.Earned.Count==0){<tr><td colspan="7">ยังไม่มีการเข้าพักที่เช็กอินแล้ว</td></tr>}</tbody></table></div>
+
+<div class="surface table-scroll history-panel"><h2>ยังไม่ถึงรอบโอน · ยืนยันแล้ว รอลูกค้าเช็กอิน (@Model.Upcoming.Count รายการ)</h2><p class="muted">ยอดเหล่านี้ยังยกเลิกได้ก่อนวันเช็กอิน จะย้ายขึ้นไปด้านบนเมื่อลูกค้าเช็กอิน</p>
+<table class="ledger-table"><thead><tr><th>การจอง</th><th>ลูกค้า</th><th>เข้าพัก</th><th>จ่ายเมื่อ</th><th>ลูกค้าจ่าย</th><th>ส่วนของโรงแรม (คาดการณ์)</th></tr></thead><tbody>
+@foreach(var line in Model.Upcoming){var o=line.Order;<tr><td>LG@(o.Id.ToString("D6"))<br /><small class="muted">@BookingStatus.Label(o.Status)</small></td><td>@line.CustomerName<br /><small class="muted">@line.CustomerEmail</small></td><td>@o.CheckIn.ToString("dd/MM/yyyy") – @o.CheckOut.ToString("dd/MM/yyyy")</td><td>@(line.PaidAtUtc?.AddHours(7).ToString("dd/MM/yyyy HH:mm") ?? "—")</td><td>฿@o.Total.ToString("N2")</td><td>฿@line.HotelShare.ToString("N2")</td></tr>}
+@if(Model.Upcoming.Count==0){<tr><td colspan="6">ไม่มีรายการ</td></tr>}</tbody></table></div>
+
+<div class="surface table-scroll history-panel"><h2>ประวัติการโอนให้โรงแรมนี้</h2><table class="ledger-table"><thead><tr><th>วันเวลา</th><th>วิธีโอน</th><th>เลขอ้างอิง</th><th>หมายเหตุ</th><th>บันทึกโดย</th><th>จำนวน</th></tr></thead><tbody>@foreach(var pr in Model.Payouts){var p=pr.Payout;<tr><td>@p.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</td><td>@FinanceRules.MethodLabel(p.Method)</td><td>@p.Reference</td><td>@(p.Note ?? "—")</td><td>@pr.PaidByEmail</td><td>฿@p.Amount.ToString("N2")</td></tr>}@if(Model.Payouts.Count==0){<tr><td colspan="6">ยังไม่มีการโอน</td></tr>}</tbody></table></div>
+</section>

@@ -1,0 +1,18 @@
+@model IReadOnlyList<string>
+@* The hotel search bar: province, hotel name, dates, guests. Sends a GET to the hotel list (/Stays).
+   The ids are the ones search-picker.js (date and guest pop-ups) and stay.js (date checks) look for. *@
+@{
+    var q = ViewData["Query"] as Nontiwat_7362_L002.ViewModels.StayListQuery;
+    var guests = q?.Guests is int g && g is >= 1 and <= 4 ? g : 2;
+}
+<form class="stay-search a-search search-strip" id="hotel-search" method="get" action="/Stays" aria-label="ค้นหาที่พัก">
+    <div class="search-field destination-field"><label for="destination">จังหวัด</label><select id="destination" name="destination"><option value="">ทุกจังหวัด</option>@foreach (var city in Model) { <option value="@city" selected="@(q?.Destination == city)">@city</option> }</select></div>
+    <div class="search-field keyword-field"><label for="hotel-keyword">ชื่อที่พัก</label><input type="search" id="hotel-keyword" name="q" value="@q?.Q" maxlength="100" placeholder="เช่น Centara หรือ เชียงใหม่" autocomplete="off" /></div>
+    <div class="search-field"><label for="checkin">เช็กอิน</label><input type="date" id="checkin" name="checkin" value="@q?.CheckIn" /></div>
+    <div class="search-field"><label for="checkout">เช็กเอาต์</label><input type="date" id="checkout" name="checkout" value="@q?.CheckOut" /></div>
+    <div class="search-field"><label for="guests">ผู้เข้าพัก</label><select id="guests" name="guests">@for (var i = 1; i <= 4; i++) { <option value="@i" selected="@(i == guests)">@i คน · @((i + 1) / 2) ห้อง</option> }</select></div>
+    @if (!string.IsNullOrEmpty(q?.Category)) { <input type="hidden" name="category" value="@q.Category" /> }
+    @if (!string.IsNullOrEmpty(q?.Promo)) { <input type="hidden" name="promo" value="@q.Promo" /> }
+    <button class="stay-button search-button" type="submit">ค้นหา</button>
+    <p id="search-error" class="search-error" role="alert" hidden></p>
+</form>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <partial name="_AccountContext" />
+    <title>@ViewData["Title"] · Lodgo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="~/css/stay.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/commerce.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/environment.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/travel-loader.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/escape.css" asp-append-version="true" />
+    <partial name="_ThemeHead" />
+</head>
+<body class="theme-editorial">
+    <partial name="_WorkShell" />
+    <a href="#main-content" class="skip-link">ข้ามไปเนื้อหา</a>
+    <partial name="_StayNavbar" />
+    <main id="main-content">@RenderBody()</main>
+    <partial name="_StayFooter" />
+    <script src="~/js/stay.js" asp-append-version="true" defer></script>
+    <script src="~/js/search-picker.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/commerce.js" asp-append-version="true" defer></script>
+    <script src="~/js/wishlist.js" asp-append-version="true" defer></script>
+
+    <div class="travel-loader" id="travel-loader" role="status" aria-live="polite" aria-label="กำลังโหลดที่พัก" hidden>
+        <div class="travel-loader-art" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <g class="travel-icon travel-case"><rect x="26" y="30" width="48" height="49" rx="9"/><path d="M40 30v-9h20v9M38 43v23M62 43v23M36 79v5M64 79v5"/></g>
+                <g class="travel-icon travel-plane"><path d="m18 55 28-10 1-26q3-8 6 0l1 26 28 10v7l-28-5-1 17 10 7v5l-13-4-13 4v-5l10-7-1-17-28 5z"/></g>
+                <g class="travel-icon travel-hotel"><path d="M25 82V29h50v53M42 29V17h16v12M43 82V66h14v16M19 82h62M37 41h4m18 0h4M37 53h4m18 0h4"/><path d="M47 22h6"/></g>
+            </svg>
+            <span class="travel-track"></span>
+        </div>
+        <strong>กำลังเตรียมที่พักให้คุณ</strong>
+        <span class="travel-loader-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <button type="button" id="travel-dismiss" hidden>ปิดหน้ารอ</button>
+    </div>
+    <script src="~/js/travel-loader.js" asp-append-version="true" defer></script>
+</body>
+</html>

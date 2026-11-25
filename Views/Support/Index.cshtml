@@ -1,0 +1,23 @@
+@model IReadOnlyList<SupportCaseRow>
+@using Nontiwat_7362_L002.Services
+@using Nontiwat_7362_L002.Services.Support
+@{ Layout = "_StayLayout"; ViewData["Title"] = "เรื่องที่แจ้ง Lodgo support"; }
+<section class="stay-container commerce-page support-page">
+    <h1>เรื่องที่แจ้ง Lodgo support</h1>
+    <p class="lead-note">แจ้งปัญหาเรื่องการจอง เครดิต หรือที่พัก ทีม Lodgo support จะตอบกลับในหน้านี้และแจ้งเตือนที่กระดิ่ง</p>
+    <partial name="_CommerceMessage" />
+    <p><a class="stay-button" href="/Support/New">แจ้งปัญหาใหม่</a></p>
+    @if (Model.Count == 0) {
+        <div class="surface"><p>ยังไม่มีเรื่องที่แจ้ง ถ้าปัญหาเกี่ยวกับการจองใด ให้เปิดหน้าการจองนั้นแล้วกด "แจ้งปัญหาเกี่ยวกับการจองนี้"</p></div>
+    } else {
+        <ul class="case-list">
+            @foreach (var row in Model) { var c = row.Case;
+                <li><a class="surface case-item" href="/Support/Case/@c.Id">
+                    <span class="case-status case-@c.Status.ToLowerInvariant()">@SupportStatus.Label(c.Status)</span>
+                    <strong>@c.Subject</strong>
+                    <small>@SupportTicketRules.Number(c.Id) · @SupportTopic.Label(c.Topic)@(c.OrderId is int oid ? " · การจอง LG" + oid.ToString("D6") : "") · @row.Messages ข้อความ · อัปเดต @ThaiDates.Long(c.UpdatedAtUtc.AddHours(7))</small>
+                </a></li>
+            }
+        </ul>
+    }
+</section>

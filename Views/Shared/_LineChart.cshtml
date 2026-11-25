@@ -1,0 +1,52 @@
+@model Nontiwat_7362_L002.ViewModels.Roles.LineChart
+@using System.Globalization
+@* Server-drawn single-series line chart. One measure per chart (no second y-axis). Points show their value on
+   hover (<title>); they are not tab stops because role="img" hides children from assistive tech, and the table
+   under the charts carries every number. *@
+@{
+    const double W = 640, H = 240, L = 56, R = 16, T = 16, B = 32;
+    var n = Model.Values.Count;
+    var max = Math.Max(0, n == 0 ? 0 : Model.Values.Max());
+    var min = Math.Min(0, n == 0 ? 0 : Model.Values.Min());
+    // Round step (1, 2 or 5 × 10^k; whole numbers for counts) so every grid line is a round value and zero is one of them.
+    double NiceStep(double raw) { if (raw <= 0) return 1; var p = Math.Pow(10, Math.Floor(Math.Log10(raw))); var f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+    var step = NiceStep((max - min) / 4);
+    if (Model.Format == "count") step = Math.Max(1, Math.Ceiling(step));
+    var lo = Math.Floor(min / step) * step;
+    var hi = Math.Ceiling(max / step) * step;
+    if (hi <= lo) hi = lo + step;
+    var ticks = (int)Math.Round((hi - lo) / step);
+    double X(int i) => n <= 1 ? L + (W - L - R) / 2 : L + i * (W - L - R) / (n - 1);
+    double Y(double v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    string F(double v) => v.ToString("0.#", CultureInfo.InvariantCulture);
+    // Razor reserves <text> inside code blocks, so SVG text elements are written here (content HTML-encoded).
+    Microsoft.AspNetCore.Html.HtmlString Txt(string cls, double x, double y, string anchor, string content) =>
+        new($"<text class=\"{cls}\" x=\"{F(x)}\" y=\"{F(y)}\" text-anchor=\"{anchor}\">{System.Net.WebUtility.HtmlEncode(content)}</text>");
+    var path = string.Join(" ", Model.Values.Select((v, i) => (i == 0 ? "M" : "L") + F(X(i)) + " " + F(Y(v))));
+    var last = n - 1;
+    // With many months label every other one, counted back from the latest, so labels are evenly spaced and never touch.
+    var every = n > 6 ? 2 : 1;
+    var summary = n == 0 ? "ไม่มีข้อมูล" : $"{Model.Title}: {Model.Labels[0]} {Model.FormatValue(Model.Values[0])} ถึง {Model.Labels[last]} {Model.FormatValue(Model.Values[last])}, สูงสุด {Model.FormatValue(Model.Values.Max())}";
+}
+<figure class="chart-figure">
+    <figcaption class="chart-title" id="@(Model.Id)-title">@Model.Title</figcaption>
+    <svg class="line-chart" role="img" aria-labelledby="@(Model.Id)-title @(Model.Id)-desc" viewBox="0 0 @W @H" preserveAspectRatio="xMidYMid meet">
+        <desc id="@(Model.Id)-desc">@summary</desc>
+        @for (var g = 0; g <= ticks; g++) { var v = lo + step * g; var y = Y(v);
+            <line class="@(v == 0 ? "chart-grid chart-zero" : "chart-grid")" x1="@L" x2="@(W - R)" y1="@F(y)" y2="@F(y)" />
+            @Txt("chart-axis", L - 8, y + 4, "end", Model.FormatAxis(v))
+        }
+        @for (var i = 0; i < n; i++) { if ((last - i) % every != 0) { continue; }
+            @Txt("chart-axis", X(i), H - 10, "middle", Model.Labels[i])
+        }
+        <path class="chart-line" d="@path" />
+        @for (var i = 0; i < n; i++) {
+            <g class="chart-point">
+                <title>@Model.Labels[i]: @Model.FormatValue(Model.Values[i])</title>
+                <circle class="chart-hit" cx="@F(X(i))" cy="@F(Y(Model.Values[i]))" r="14" />
+                <circle class="chart-dot" cx="@F(X(i))" cy="@F(Y(Model.Values[i]))" r="4.5" />
+            </g>
+        }
+        @if (n > 0) { @Txt("chart-value", X(last), Y(Model.Values[last]) - 12, "end", Model.FormatValue(Model.Values[last])) }
+    </svg>
+</figure>

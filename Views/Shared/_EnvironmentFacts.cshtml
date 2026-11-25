@@ -1,0 +1,9 @@
+@model Nontiwat_7362_L002.Models.StayEnvironment
+@using Nontiwat_7362_L002.Models
+<div class="environment-facts">
+@if(StayEnvironmentOptions.Categories.TryGetValue(Model.Category, out var category)){<span class="environment-badge">@category</span>}
+@if(StayEnvironmentOptions.Views.TryGetValue(Model.ViewType, out var view)){<span class="environment-badge">@view</span>}
+@if(Model.HasPool is not null){<span class="environment-badge">@(Model.HasPool.Value ? "มีสระว่ายน้ำ" : "ไม่มีสระว่ายน้ำ")</span>}
+@if(Model.SeaDistanceKm is not null){<span class="environment-badge">ทะเล @StayEnvironmentOptions.Distance(Model.SeaDistanceKm)</span>}
+@if(Model.ForestDistanceKm is not null){<span class="environment-badge">ป่า @StayEnvironmentOptions.Distance(Model.ForestDistanceKm)</span>}
+</div>

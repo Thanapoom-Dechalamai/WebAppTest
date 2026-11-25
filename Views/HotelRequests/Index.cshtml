@@ -1,0 +1,45 @@
+@model List<Nontiwat_7362_L002.Services.HotelAccessService.Row>
+@{
+    Layout = "_StayLayout"; ViewData["Title"] = "คำขอสิทธิ์ดูแลโรงแรม";
+    var groups = new[] {
+        (Key: AccessRequestStatus.Pending, Id: "pending", Empty: "ไม่มีคำขอที่รอพิจารณา"),
+        (Key: AccessRequestStatus.Approved, Id: "approved", Empty: "ยังไม่มีคำขอที่อนุมัติ"),
+        (Key: AccessRequestStatus.Rejected, Id: "rejected", Empty: "ยังไม่มีคำขอที่ไม่อนุมัติ")
+    };
+}
+<section class="stay-container commerce-page access-page"><partial name="_RoleNavigation" />
+    <h1>คำขอสิทธิ์ดูแลโรงแรม</h1>
+    <p class="lead-note">พนักงานโรงแรมขอดูแลโรงแรมพร้อมแนบหลักฐาน กดที่คำขอเพื่อตรวจหลักฐานแล้วอนุมัติหรือไม่อนุมัติ</p>
+    <partial name="_CommerceMessage" />
+    <nav class="req-jump" aria-label="กลุ่มคำขอ">
+        @foreach (var g in groups) {
+            var n = Model.Count(x => x.Request.Status == g.Key);
+            <a href="#@g.Id" class="req-jump-@g.Id"><span>@AccessRequestStatus.Label(g.Key)</span><strong>@n</strong></a>
+        }
+    </nav>
+    @foreach (var g in groups) {
+        var rows = Model.Where(x => x.Request.Status == g.Key).ToList();
+        <section class="req-group" id="@g.Id" aria-labelledby="@g.Id-title">
+            <h2 id="@g.Id-title">@AccessRequestStatus.Label(g.Key) <span class="req-count">@rows.Count</span></h2>
+            @if (rows.Count == 0) {
+                <p class="req-empty">@g.Empty</p>
+            } else {
+                <ul class="req-grid">
+                    @foreach (var r in rows) {
+                        var q = r.Request; var local = q.CreatedAtUtc.AddHours(7);
+                        <li>
+                            <a class="req-tile is-@g.Id" href="/HotelRequests/@q.Id">
+                                <span class="req-tile-top"><span class="pill req-pill-@g.Id">@AccessRequestStatus.Label(q.Status)</span><small>#@q.Id</small></span>
+                                <strong class="req-hotel">@r.HotelName</strong>
+                                <span class="req-city">@r.City</span>
+                                <span class="req-who">@r.Name<small>@r.Email</small></span>
+                                <span class="req-when">ส่ง @ThaiDates.Long(local) · @local.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
+                                <span class="req-more">@(q.Status == AccessRequestStatus.Pending ? "ตรวจและตัดสิน" : "ดูรายละเอียด")</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    }
+</section>

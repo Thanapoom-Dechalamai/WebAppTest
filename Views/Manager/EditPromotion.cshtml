@@ -1,0 +1,9 @@
+@model PromotionForm
+@{Layout="_StayLayout";ViewData["Title"]="จัดการโปรโมชั่น";}
+<section class="stay-container commerce-page"><partial name="_RoleNavigation" /><h1>@(Model.Id==0?"สร้างโปรโมชั่นใหม่":"แก้ไขโปรโมชั่น")</h1>
+<form asp-action="EditPromotion" method="post" class="surface form-stack"><input asp-for="Id" type="hidden" /><div asp-validation-summary="All" class="validation-errors"></div><label>ชื่อโปรโมชั่น<input asp-for="Title" maxlength="120" required /></label><label>รายละเอียด<textarea asp-for="Details" maxlength="1000" rows="3" required></textarea></label>
+<div class="form-pair"><label>โค้ดส่วนลด (เว้นว่างสำหรับข่าวสาร)<input asp-for="Code" maxlength="40" placeholder="เช่น STAY15" /></label><label>รูปแบบส่วนลด<select asp-for="DiscountKind"><option value="Percent">เปอร์เซ็นต์ (%)</option><option value="Fixed">จำนวนบาท</option></select></label></div>
+<div class="form-pair"><label>ส่วนลด<input asp-for="DiscountValue" type="number" min="0" max="50000" step="0.01" /></label><label>ลดสูงสุด (เว้นว่าง = ไม่จำกัด)<input asp-for="MaxDiscount" type="number" min="0.01" step="0.01" /></label></div>
+<div class="form-pair"><label>พักขั้นต่ำ (คืน)<input asp-for="MinNights" type="number" min="1" max="30" /></label><label>ยอดก่อนลดขั้นต่ำ (บาท)<input asp-for="MinSpend" type="number" min="0" step="0.01" /></label></div>
+<div class="form-pair"><label>เริ่มใช้<input asp-for="StartsOn" type="date" asp-format="{0:yyyy-MM-dd}" /></label><label>สิ้นสุด<input asp-for="EndsOn" type="date" asp-format="{0:yyyy-MM-dd}" /></label></div><label class="role-checkbox"><input asp-for="IsActive" /> เปิดใช้งานตามช่วงวันที่</label>
+<p class="simulation-box">แต่ละบัญชีใช้แต่ละโปรโมชั่นได้ 1 ครั้ง สิทธิ์ถูกใช้เมื่อส่งคำขอจองสำเร็จเท่านั้น ยกเลิกแล้วไม่คืนสิทธิ์คูปอง คืนเฉพาะเครดิตที่จ่ายจริง</p><button class="stay-button" type="submit">บันทึกโปรโมชั่น</button><a asp-action="Promotions">กลับรายการ</a></form></section>

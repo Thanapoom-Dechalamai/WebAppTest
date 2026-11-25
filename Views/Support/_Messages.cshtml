@@ -1,0 +1,16 @@
+@model SupportCaseView
+@using Nontiwat_7362_L002.Services
+@{ var asStaff = ViewData["AsStaff"] is true; }
+<div data-chat-status="@Model.Case.Status">
+    <ol class="case-thread" aria-label="ข้อความในเรื่องนี้">
+        @foreach (var m in Model.Messages) {
+            <li class="@(m.Message.FromStaff ? "msg msg-staff" : "msg msg-customer") @(m.Message.FromStaff == asStaff ? "chat-mine" : "chat-other")">
+                <p class="msg-head"><strong>@(m.Message.FromStaff ? "Lodgo support · " + m.AuthorName : m.AuthorName)</strong><time>@ThaiDates.Long(m.Message.CreatedAtUtc.AddHours(7)) @m.Message.CreatedAtUtc.AddHours(7).ToString("HH:mm") น.</time></p>
+                @if (m.Message.Body.Length > 0) { <p class="msg-body">@m.Message.Body</p> }
+                @if (m.Message.Attachment is not null) {
+                    <a class="text-link" asp-controller="@(asStaff ? "Staff" : "Support")" asp-action="Attachment" asp-route-id="@m.Message.Id">ดาวน์โหลดไฟล์แนบ</a>
+                }
+            </li>
+        }
+    </ol>
+</div>

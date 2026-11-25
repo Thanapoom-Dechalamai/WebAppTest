@@ -1,0 +1,85 @@
+@model BookingDetailPage
+@using Nontiwat_7362_L002.Services
+@{ var o = Model.Order; Layout = "_StayLayout"; ViewData["Title"] = "รายละเอียดการจอง LG" + o.Id.ToString("D6");
+   var transfer = o.PaymentMethod == PaymentMethods.Transfer;
+   // Every booking: customer -> Lodgo accounts check the money -> hotel confirms -> stay
+   var steps = new[] { ("PaymentReview", transfer ? "ส่งคำขอและสลิป" : "ส่งคำขอ"), ("Pending", "บัญชีตรวจเงินแล้ว"), ("Confirmed", "โรงแรมยืนยัน"), ("CheckedIn", "เช็กอิน"), ("Completed", "เข้าพักเสร็จ") };
+   var reached = o.Status switch { "PaymentReview" => 0, "Pending" => 1, "Confirmed" => 2, "NoShow" => 2, "CheckedIn" => 3, "Completed" => 4, _ => -1 };
+   var unpaid = o.Status == BookingStatus.PaymentReview && transfer;
+   var nextStep = o.Status switch {
+       "Pending" => Model.HotelTeamSize > 0
+           ? $"คำขอถูกส่งถึงพนักงานของ {o.HotelName} แล้ว ({Model.HotelTeamSize} คนดูแล) พนักงานจะตรวจห้องว่างแล้วกดยืนยัน หากไม่มีการยืนยันก่อนวันเช็กอิน ระบบจะยกเลิกและคืนเครดิตให้อัตโนมัติ"
+           : $"{o.HotelName} ยังไม่มีพนักงานรับเรื่อง Lodgo support จะติดตามให้ หากไม่มีการยืนยันก่อนวันเช็กอิน ระบบจะยกเลิกและคืนเครดิตให้อัตโนมัติ",
+       "Confirmed" => $"ห้องยืนยันแล้ว แจ้งหมายเลขการจอง LG{o.Id:D6} ที่แผนกต้อนรับของ {o.HotelName} ในวันเช็กอิน",
+       "CheckedIn" => "กำลังเข้าพัก คุณจะเขียนรีวิวได้หลังพนักงานโรงแรมบันทึกเช็กเอาต์",
+       "Completed" => "เข้าพักเสร็จสิ้น ขอบคุณที่ใช้ Lodgo",
+       "NoShow" => "โรงแรมบันทึกว่าไม่ได้มาเข้าพักตามวันที่จอง รายการนี้ปิดแล้วและไม่คืนเครดิต",
+       "PaymentReview" => transfer ? "ฝ่ายบัญชี Lodgo กำลังตรวจการโอนเงินของคุณ เมื่อยอดถูกต้องจะส่งคำขอให้โรงแรมยืนยันห้อง และแจ้งคุณทางการแจ้งเตือน" : "ฝ่ายบัญชี Lodgo กำลังตรวจการชำระด้วยเครดิต เมื่อถูกต้องจะส่งคำขอให้โรงแรมยืนยันห้อง และแจ้งคุณทางการแจ้งเตือน",
+       "Cancelled" when transfer && o.HotelSentAtUtc is null => "รายการนี้ยกเลิกแล้ว รายการนี้ยังไม่ได้ชำระเงินผ่าน Lodgo จึงไม่มีเครดิตคืน",
+       _ => "รายการนี้ยกเลิกแล้ว เครดิตคืนเข้าบัญชีของคุณ" };
+   var mapUrl = "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(o.HotelName + " " + o.City);
+   var freeCancelUntil = o.CheckIn.AddDays(-1);
+   var finished = o.Status is "Completed" or "Cancelled" or "NoShow"; }
+<section class="stay-container commerce-page booking-detail"><a class="back-link" asp-action="Bookings">ดูการจองทั้งหมด</a><partial name="_CommerceMessage" />
+
+    @if (finished && (Model.CanReview || Model.Hotel is not null)) {
+        <div class="bd-top-actions">
+            @if (Model.CanReview) {
+                <a class="stay-button" asp-action="Review" asp-route-id="@o.Id">เขียนรีวิวที่พัก</a>
+            } else if (Model.Reviewed && Model.Hotel is not null) {
+                <a class="stay-button secondary" asp-action="Details" asp-route-id="@o.HotelId" asp-fragment="reviews">ดูรีวิวของคุณ</a>
+            }
+            @if (Model.Hotel is not null) {
+                <a class="stay-button secondary" asp-action="Details" asp-route-id="@o.HotelId">ดูห้องสำหรับจองใหม่</a>
+            }
+        </div>
+    }
+
+    <article class="bd-card bd-hero">
+        @if (Model.Hotel is not null) { <div class="bd-photo"><partial name="_HotelPhoto" model="Model.Hotel" view-data='@(new ViewDataDictionary(ViewData) { ["PhotoEager"] = true })' /></div> }
+        <div class="bd-row">
+            <div><span class="pill @(o.Status is "Cancelled" or "NoShow" ? "cancelled" : o.Status == "Pending" ? "pending" : "")">@BookingStatus.Label(o.Status)</span>
+                <h1>@o.HotelName</h1><p class="muted">หมายเลขการจอง <strong class="booking-ref">LG@(o.Id.ToString("D6"))</strong> · จองเมื่อ @o.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm") น.</p>
+                <p class="bd-location">@o.City · <a href="@mapUrl" target="_blank" rel="noopener">ดูแผนที่<span class="visually-hidden"> (เปิดแท็บใหม่)</span></a></p></div>
+            <aside class="bd-side"><a class="text-link" href="/Stays/Print/@o.Id">พิมพ์ใบยืนยันการจอง</a><a class="text-link" href="#policy">ดูนโยบายการยกเลิก</a>@if (Model.Hotel is not null) { <a class="text-link" asp-action="Details" asp-route-id="@o.HotelId">ดูข้อมูลที่พัก</a> }</aside>
+        </div>
+        <div class="bd-dates"><div><span>เช็กอิน</span><strong>@ThaiDates.Long(o.CheckIn)</strong></div><span class="bd-nights">@Model.Nights คืน</span><div><span>เช็กเอาต์</span><strong>@ThaiDates.Long(o.CheckOut)</strong></div></div>
+    </article>
+
+    <article class="bd-card">
+        <h2>สถานะการจอง</h2>
+        <ol class="booking-timeline step-circles" style="--steps:@steps.Length" aria-label="ความคืบหน้าการจอง">@for (var i = 0; i < steps.Length; i++) { var waiting = i == reached + 1 && reached >= 0 && o.Status != "NoShow"; <li class="@(i <= reached ? "done" : waiting ? "current" : "")" aria-current="@(waiting ? "step" : null)"><span class="step-dot" aria-hidden="true">@if (i <= reached) { <svg viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> } else { @(i + 1) }</span><span class="step-label">@steps[i].Item2</span>@if (i <= reached) { <span class="visually-hidden"> (เสร็จแล้ว)</span> } else if (waiting) { <span class="visually-hidden"> (กำลังรอขั้นนี้)</span> }</li> }</ol>
+        <div class="simulation-box next-step"><strong>ขั้นต่อไป:</strong> @nextStep</div>
+        @if (Model.DemoStep is string demoStep) {
+            <form class="cancel-order" asp-action="SimulateNext" method="post">
+                <input type="hidden" name="id" value="@o.Id" />
+                <p class="muted">โหมดสาธิต · ทำขั้นตอนแทนเจ้าหน้าที่</p>
+                <button class="stay-button secondary" type="submit">ทำขั้นถัดไป: @demoStep</button>
+            </form>
+        }
+        <h3 class="event-log-title">ประวัติการดำเนินการ</h3>
+        <ol class="event-log">@foreach (var e in Model.Timeline) { <li class="event-@e.Status.ToLowerInvariant()"><time>@e.AtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm") น.</time><strong>@e.Title</strong><span>@e.Note</span><small>โดย @e.Actor</small></li> }</ol>
+    </article>
+
+    <article class="bd-help"><div><h2>ต้องการความช่วยเหลือ?</h2><p>แจ้งเรื่องจองผิด ส่งสลิปผิด ขอแก้ข้อมูล หรือขอยกเลิกผ่านแชต ระบบจะแนบเลขการจองให้เจ้าหน้าที่</p></div><a class="stay-button secondary" href="/Support/New?orderId=@o.Id">แชตกับเจ้าหน้าที่เรื่องการจองนี้</a></article>
+
+    <article class="bd-card bd-split"><div><h2>รายละเอียดห้องพัก</h2><p class="bd-strong">@o.Rooms × @o.RoomName</p>@if (Model.Room is not null) { <p class="muted">@Model.Room.Features</p> }<p class="muted">ราคา ฿@o.NightlyRate.ToString("N2") ต่อห้อง/คืน</p></div></article>
+
+    <article class="bd-card bd-split"><div><h2>ข้อมูลผู้เข้าพัก</h2><dl class="bd-list"><dt>ผู้เข้าพักที่ได้รับการยืนยันการจอง</dt><dd>@Model.GuestName</dd><dt>อีเมล</dt><dd>@Model.GuestEmail</dd><dt>จำนวนผู้เข้าพักที่จอง</dt><dd>ผู้ใหญ่ @o.Guests คน · @o.Rooms ห้อง</dd><dt>คำขอพิเศษ</dt><dd>@if (o.SpecialRequest is not null) { <span class="special-text">@o.SpecialRequest</span><br /><small class="muted">โรงแรมจะพยายามจัดให้ แต่ไม่รับประกัน</small> } else { <span class="muted">ไม่มี</span> }</dd></dl></div></article>
+
+    <article class="bd-card" id="policy"><h2>นโยบายการยกเลิกการจอง</h2>
+        <ul class="bd-policy">
+            <li class="ok"><strong>ยกเลิกฟรี</strong><span>ถึง @ThaiDates.Long(freeCancelUntil) (ก่อนวันเช็กอิน) คืนเครดิตเต็มจำนวน ฿@o.Total.ToString("N2")</span></li>
+            <li class="no"><strong>ยกเลิกไม่ได้ · ไม่คืนเครดิต</strong><span>ตั้งแต่วันเช็กอิน @ThaiDates.Long(o.CheckIn) หรือหากไม่ได้มาเข้าพัก</span></li>
+            <li class="ok"><strong>โรงแรมเป็นฝ่ายยกเลิก</strong><span>คืนเครดิตเต็มจำนวนและคืนสิทธิ์โค้ดส่วนลด</span></li>
+        </ul>
+        <p class="muted">ส่งคำขอยกเลิกผ่านแชต เจ้าหน้าที่จะตรวจสถานะและแจ้งผลตามเงื่อนไขของรายการ</p>
+    </article>
+
+    <article class="bd-card bd-split"><div><h2>ข้อมูลการชำระเงิน</h2>
+        <dl class="bd-price"><dt>@o.Rooms ห้อง × @Model.Nights คืน × ฿@o.NightlyRate.ToString("N2")</dt><dd>฿@((o.Subtotal ?? o.Total).ToString("N2"))</dd>
+            @if (o.DiscountAmount > 0) { <dt>ส่วนลด @o.PromotionCode</dt><dd class="discount-text">−฿@o.DiscountAmount.ToString("N2")</dd> }
+            <dt class="bd-total">ราคารวมทั้งสิ้น</dt><dd class="bd-total">฿@o.Total.ToString("N2")</dd></dl>
+        @if (transfer) { <p class="muted">วิธีชำระเงิน: โอนเงินเข้าบัญชี Lodgo@(o.PaymentRef is null ? "" : " · เลขที่รายการ " + o.PaymentRef)@(unpaid ? " · รอตรวจ" : "")@if (o.SlipFile is not null) { <text> · </text><a asp-action="Slip" asp-route-id="@o.Id.ToString()" target="_blank" rel="noopener">ดูสลิป<span class="visually-hidden"> (เปิดแท็บใหม่)</span></a> }</p> } else { <p class="muted">วิธีชำระเงิน: เครดิต Lodgo (จำลอง)@(o.Status == "Cancelled" ? " · คืนเข้ากระเป๋าแล้ว" : "")</p> }</div>
+        <aside class="bd-side"><a class="text-link" asp-controller="Member" asp-action="Wallet">ดูยอดเครดิตและประวัติ</a></aside></article>
+</section>

@@ -1,0 +1,119 @@
+@inject Nontiwat_7362_L002.Data.ApplicationDbContext WorkDb
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@*
+  Back-office sidebar (2026-11-22, owner's reference): black-and-white, light or dark (remembered per browser).
+  Shown only to signed-in users on staff pages; the CSS hides the site header and footer
+  when it is present (lodgo-a.css section 26). Each role sees its own menu; Admin sees every role's menu as groups.
+*@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    string[] workControllers = ["HotelOwner", "Staff", "TeamBookings", "AC", "Manager", "Owner", "Admin", "HotelManagement", "HotelCatalog", "HotelRooms", "HotelPhotos", "HotelRequests", "StayEnvironment"];
+    var show = User.Identity?.IsAuthenticated == true && workControllers.Contains(controller);
+}
+@if (show)
+{
+    var role = AppRoles.Current(User);
+    var admin = User.IsInRole(AppRoles.Admin);
+    int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var me);
+    var person = await WorkDb.Users.AsNoTracking().Where(x => x.Id == me).Select(x => new { x.FirstName, x.LastName, x.Email }).SingleOrDefaultAsync();
+    var unread = await WorkDb.Notifications.CountAsync(x => x.UserId == me && !x.IsRead);
+    var myHotels = await WorkDb.HotelAssignments.AsNoTracking().Where(x => x.OwnerUserId == me).Select(x => x.HotelId).ToListAsync();
+    int? toConfirm = role == AppRoles.HotelOwner || admin ? await WorkDb.Orders.CountAsync(x => x.Status == BookingStatus.Pending && (admin || myHotels.Contains(x.HotelId))) : null;
+    int? slips = role == AppRoles.AC || admin ? await WorkDb.Orders.CountAsync(x => x.Status == BookingStatus.PaymentReview) : null;
+    int? cases = role == AppRoles.Staff || admin ? await WorkDb.SupportCases.CountAsync(x => x.Status == SupportStatus.Open) : null;
+    int? requests = role == AppRoles.Manager || admin ? await WorkDb.HotelAccessRequests.CountAsync(x => x.Status == AccessRequestStatus.Pending) : null;
+    bool On(string c, string a = "Index") => string.Equals(controller, c, StringComparison.OrdinalIgnoreCase) && string.Equals(action, a, StringComparison.OrdinalIgnoreCase);
+    string Cls(string c, string a = "Index") => On(c, a) ? "is-on" : "";
+    string? Cur(string c, string a = "Index") => On(c, a) ? "page" : null;
+    var name = string.IsNullOrWhiteSpace($"{person?.FirstName} {person?.LastName}") ? person?.Email ?? "" : $"{person?.FirstName} {person?.LastName}".Trim();
+    var groups = new List<(string Role, string Title, string Dot)>();
+    void Add(string r, string title, string dot) { if (admin || role == r) groups.Add((r, title, dot)); }
+    Add(AppRoles.HotelOwner, "พนักงานโรงแรม", "var(--w-s1)");
+    Add(AppRoles.Staff, "Lodgo support", "var(--w-s2)");
+    Add(AppRoles.AC, "บัญชี", "var(--w-s3)");
+    Add(AppRoles.Manager, "ผู้จัดการ", "var(--w-s4)");
+    Add(AppRoles.Owner, "เจ้าของกิจการ", "var(--w-s5)");
+    <script>
+        (function () { var m = null; try { m = localStorage.getItem('lodgo-work-mode'); } catch (e) {} document.documentElement.setAttribute('data-mode', m === 'light' ? 'light' : 'dark'); })();
+    </script>
+    <aside class="work-side" aria-label="เมนูหลังบ้าน">
+        <div class="work-brand"><a asp-controller="Account" asp-action="Index" class="work-logo">Lodgo</a><span class="work-kbd">หลังบ้าน</span></div>
+        <form class="work-search" method="get" action="/Staff/Index" role="search">
+            <label class="visually-hidden" for="work-q">ค้นหาการจอง</label>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input id="work-q" name="search" placeholder="ค้นหาการจอง" autocomplete="off" @(role == AppRoles.Staff || admin ? "" : "disabled") />
+        </form>
+        @if (admin)
+        {
+            <nav class="work-nav" aria-label="ผู้ดูแลระบบ">
+                <p class="work-label">Admin</p>
+                <a class="@Cls("Admin")" aria-current="@Cur("Admin")" asp-controller="Admin" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>แผงควบคุม</span></a>
+                <a class="@Cls("Admin", "UserList")" aria-current="@Cur("Admin", "UserList")" asp-controller="Admin" asp-action="UserList"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21c1-4 4-6 7-6s6 2 7 6"/></svg><span>ผู้ใช้และบทบาท</span></a>
+                <a class="@Cls("HotelManagement")" aria-current="@Cur("HotelManagement")" asp-controller="HotelManagement" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg><span>โรงแรมและทีม</span></a>
+                <a class="@(controller is "HotelCatalog" or "HotelRooms" or "HotelPhotos" ? "is-on" : "")" aria-current="@Cur("HotelCatalog")" asp-controller="HotelCatalog" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V3h16v18M2 21h20M9 21v-5h6v5M8 7h2m4 0h2M8 11h2m4 0h2"/></svg><span>จัดการข้อมูลโรงแรม</span></a>
+                <a class="@Cls("HotelRequests")" aria-current="@Cur("HotelRequests")" href="/HotelRequests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>คำขอสิทธิ์โรงแรม</span>@if (requests > 0) { <b class="work-count">@requests</b> }</a>
+                <a class="@Cls("Admin", "AuditLogs")" aria-current="@Cur("Admin", "AuditLogs")" asp-controller="Admin" asp-action="AuditLogs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>ประวัติการใช้งาน</span></a>
+            </nav>
+        }
+        @foreach (var g in groups)
+        {
+            var mine = !admin;
+            <details class="work-group" open="@(mine || g.Role == AppRoles.HotelOwner && controller == "HotelOwner" || g.Role == AppRoles.Staff && controller == "Staff" || g.Role == AppRoles.AC && controller == "AC" || g.Role == AppRoles.Manager && controller == "Manager" || g.Role == AppRoles.Owner && controller == "Owner")">
+                <summary class="work-label">@g.Title</summary>
+                <nav class="work-nav" aria-label="@g.Title">
+                    @if (g.Role == AppRoles.HotelOwner) {
+                        <a class="@Cls("HotelOwner")" aria-current="@Cur("HotelOwner")" asp-controller="HotelOwner" asp-action="Index"><i style="background:@g.Dot" aria-hidden="true"></i><span>ภาพรวมโรงแรม</span>@if (toConfirm > 0) { <b class="work-count">@toConfirm</b> }</a>
+                        <a class="@Cls("HotelOwner", "Today")" aria-current="@Cur("HotelOwner", "Today")" asp-controller="HotelOwner" asp-action="Today"><i style="background:@g.Dot" aria-hidden="true"></i><span>แขกวันนี้</span></a>
+                        <a class="@Cls("HotelOwner", "Calendar")" aria-current="@Cur("HotelOwner", "Calendar")" asp-controller="HotelOwner" asp-action="Calendar"><i style="background:@g.Dot" aria-hidden="true"></i><span>ห้องว่าง</span></a>
+                        <a class="@Cls("HotelOwner", "Reviews")" aria-current="@Cur("HotelOwner", "Reviews")" asp-controller="HotelOwner" asp-action="Reviews"><i style="background:@g.Dot" aria-hidden="true"></i><span>รีวิว</span></a>
+                        <a class="@Cls("StayEnvironment", "Edit")" aria-current="@Cur("StayEnvironment", "Edit")" asp-controller="StayEnvironment" asp-action="Edit"><i style="background:@g.Dot" aria-hidden="true"></i><span>ข้อมูลที่พัก</span></a>
+                        @if (!admin) { <a class="@Cls("HotelOwner", "Access")" aria-current="@Cur("HotelOwner", "Access")" asp-controller="HotelOwner" asp-action="Access"><i style="background:@g.Dot" aria-hidden="true"></i><span>ขอสิทธิ์โรงแรม</span></a> }
+                    }
+                    @if (g.Role == AppRoles.Staff) {
+                        <a class="@Cls("Staff")" aria-current="@Cur("Staff")" asp-controller="Staff" asp-action="Index"><i style="background:@g.Dot" aria-hidden="true"></i><span>ติดตามการจอง</span></a>
+                        <a class="@Cls("Staff", "Cases")" aria-current="@Cur("Staff", "Cases")" href="/Staff/Cases"><i style="background:@g.Dot" aria-hidden="true"></i><span>Ticket ลูกค้า</span>@if (cases > 0) { <b class="work-count">@cases</b> }</a>
+                    }
+                    @if (g.Role == AppRoles.AC) {
+                        <a class="@Cls("AC")" aria-current="@Cur("AC")" asp-controller="AC" asp-action="Index"><i style="background:@g.Dot" aria-hidden="true"></i><span>ภาพรวมบัญชี</span></a>
+                        <a class="@Cls("AC", "Payments")" aria-current="@Cur("AC", "Payments")" asp-controller="AC" asp-action="Payments"><i style="background:@g.Dot" aria-hidden="true"></i><span>ตรวจการชำระเงิน</span>@if (slips > 0) { <b class="work-count">@slips</b> }</a>
+                        <a class="@Cls("AC", "Settlement")" aria-current="@Cur("AC", "Settlement")" asp-controller="AC" asp-action="Settlement"><i style="background:@g.Dot" aria-hidden="true"></i><span>ยอดที่ต้องโอนให้โรงแรม</span></a>
+                        <a class="@Cls("AC", "Reconcile")" aria-current="@Cur("AC", "Reconcile")" asp-controller="AC" asp-action="Reconcile"><i style="background:@g.Dot" aria-hidden="true"></i><span>กระทบยอด</span></a>
+                    }
+                    @if (g.Role == AppRoles.Manager) {
+                        <a class="@Cls("Manager")" aria-current="@Cur("Manager")" asp-controller="Manager" asp-action="Index"><i style="background:@g.Dot" aria-hidden="true"></i><span>ทีมงาน</span></a>
+                        <a class="@Cls("Manager", "Promotions")" aria-current="@Cur("Manager", "Promotions")" asp-controller="Manager" asp-action="Promotions"><i style="background:@g.Dot" aria-hidden="true"></i><span>โปรโมชั่น</span></a>
+                        <a class="@Cls("Manager", "Kpi")" aria-current="@Cur("Manager", "Kpi")" href="/Manager/Kpi"><i style="background:@g.Dot" aria-hidden="true"></i><span>KPI</span></a>
+                        @if (!admin) { <a class="@Cls("HotelRequests")" aria-current="@Cur("HotelRequests")" href="/HotelRequests"><i style="background:@g.Dot" aria-hidden="true"></i><span>คำขอสิทธิ์โรงแรม</span>@if (requests > 0) { <b class="work-count">@requests</b> }</a> }
+                    }
+                    @if (g.Role == AppRoles.Owner) {
+                        <a class="@Cls("Owner")" aria-current="@Cur("Owner")" asp-controller="Owner" asp-action="Index"><i style="background:@g.Dot" aria-hidden="true"></i><span>ภาพรวมกิจการ</span></a>
+                    }
+                </nav>
+            </details>
+        }
+        <div class="work-foot">
+            <div class="work-mode" role="group" aria-label="โหมดสี">
+                <button type="button" data-work-mode="light" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>สว่าง</button>
+                <button type="button" data-work-mode="dark" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 13a9 9 0 1 1-10-10 7 7 0 0 0 10 10z"/></svg>มืด</button>
+            </div>
+            <nav class="work-nav" aria-label="บัญชีของฉัน">
+                <a asp-controller="Account" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>กลับหน้าเว็บ</span></a>
+                <a href="/Notifications/Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span>การแจ้งเตือน</span>@if (unread > 0) { <b class="work-count">@unread</b> }</a>
+            </nav>
+            <div class="work-me"><span class="work-avatar" aria-hidden="true">@(name.Length > 0 ? name.Substring(0, 1).ToUpperInvariant() : "?")</span><div><span>@name</span><small>@AppRoles.Label(role)</small></div>
+                <form asp-controller="Account" asp-action="Logout" method="post"><button class="work-logout" type="submit">ออกจากระบบ</button></form></div>
+        </div>
+    </aside>
+    <script>
+        (function () {
+            var root = document.documentElement;
+            function sync() { var m = root.getAttribute('data-mode'); document.querySelectorAll('[data-work-mode]').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-work-mode') === m ? 'true' : 'false'); }); }
+            document.querySelectorAll('[data-work-mode]').forEach(function (b) {
+                b.addEventListener('click', function () { var m = b.getAttribute('data-work-mode'); root.setAttribute('data-mode', m); try { localStorage.setItem('lodgo-work-mode', m); } catch (e) {} sync(); });
+            });
+            sync();
+        })();
+    </script>
+}

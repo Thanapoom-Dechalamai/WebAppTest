@@ -1,0 +1,61 @@
+@model Nontiwat_7362_L002.Services.HotelAccessService.Row
+@{
+    var q = Model.Request; var local = q.CreatedAtUtc.AddHours(7);
+    Layout = "_StayLayout"; ViewData["Title"] = "คำขอ #" + q.Id + " · " + Model.HotelName;
+    var pending = q.Status == AccessRequestStatus.Pending;
+    var key = pending ? "pending" : q.Status == AccessRequestStatus.Approved ? "approved" : "rejected";
+    var ext = System.IO.Path.GetExtension(q.ProofFile).ToLowerInvariant();
+    var isImage = ext is ".jpg" or ".jpeg" or ".png";
+    var when = ThaiDates.Long(local) + " · " + local.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+}
+<section class="stay-container commerce-page access-page req-detail"><partial name="_RoleNavigation" />
+    <a class="back-link" href="/HotelRequests#@key">คำขอทั้งหมด</a>
+    <header class="req-head">
+        <div>
+            <h1>@Model.HotelName</h1>
+            <p class="lead-note">คำขอ #@q.Id · @Model.City · ส่ง @when</p>
+        </div>
+        <span class="pill req-pill-@key">@AccessRequestStatus.Label(q.Status)</span>
+    </header>
+    <partial name="_CommerceMessage" />
+    <div class="req-layout">
+        <div class="req-main">
+            <section class="surface req-box" aria-labelledby="who-title">
+                <h2 id="who-title">ผู้ขอ</h2>
+                <dl class="req-facts">
+                    <div><dt>ชื่อ</dt><dd>@Model.Name</dd></div>
+                    <div><dt>อีเมล</dt><dd>@Model.Email</dd></div>
+                    <div><dt>โรงแรมที่ขอ</dt><dd>@Model.HotelName · @Model.City</dd></div>
+                    <div><dt>ข้อความถึงผู้พิจารณา</dt><dd>@(string.IsNullOrWhiteSpace(q.Message) ? "ไม่มีข้อความ" : q.Message)</dd></div>
+                </dl>
+            </section>
+            <section class="surface req-box" aria-labelledby="proof-title">
+                <h2 id="proof-title">หลักฐาน</h2>
+                @if (isImage) {
+                    <a class="req-proof" href="/HotelRequests/Proof/@q.Id" target="_blank" rel="noopener"><img src="/HotelRequests/Proof/@q.Id" alt="หลักฐานที่ @Model.Name แนบมา" loading="lazy" /></a>
+                }
+                <a class="stay-button secondary" href="/HotelRequests/Proof/@q.Id" target="_blank" rel="noopener">เปิดไฟล์หลักฐาน<span class="visually-hidden"> ของ @Model.Email (เปิดแท็บใหม่)</span></a>
+                <p class="req-hint">ตรวจว่าชื่อในหลักฐานตรงกับผู้ขอ และเป็นเอกสารของโรงแรมนี้</p>
+            </section>
+        </div>
+        <aside class="surface req-box req-decide" aria-labelledby="decide-title">
+            <h2 id="decide-title">@(pending ? "ตัดสินคำขอ" : "ผลการพิจารณา")</h2>
+            @if (pending) {
+                <p class="req-hint">อนุมัติแล้ว ระบบเพิ่มผู้ขอเข้าทีมของโรงแรมนี้ทันที และแจ้งผู้ขอ</p>
+                <form asp-action="Approve" method="post"><input type="hidden" name="id" value="@q.Id" /><button class="stay-button req-approve" type="submit">อนุมัติ · เพิ่มเข้าทีมโรงแรม</button></form>
+                <form asp-action="Reject" method="post" class="req-reject">
+                    <input type="hidden" name="id" value="@q.Id" />
+                    <label for="reject-@q.Id">เหตุผลที่ไม่อนุมัติ</label>
+                    <textarea id="reject-@q.Id" name="reason" maxlength="300" rows="3" required placeholder="เช่น ไม่พบชื่อในรายชื่อพนักงาน"></textarea>
+                    <button class="stay-button secondary" type="submit">ไม่อนุมัติ</button>
+                </form>
+            } else {
+                <dl class="req-facts">
+                    <div><dt>ผล</dt><dd>@AccessRequestStatus.Label(q.Status)</dd></div>
+                    <div><dt>ผู้พิจารณา</dt><dd>@(Model.ReviewerEmail ?? "ไม่ระบุ")</dd></div>
+                    @if (q.ReviewNote is not null) { <div><dt>เหตุผล</dt><dd>@q.ReviewNote</dd></div> }
+                </dl>
+            }
+        </aside>
+    </div>
+</section>

@@ -1,0 +1,59 @@
+@model CalendarPage
+@inject Nontiwat_7362_L002.Services.IThaiClock Clock
+@using Nontiwat_7362_L002.Services
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ปฏิทินห้องว่าง"; var today = Clock.Today;
+   var thisMonth = new DateTime(today.Year, today.Month, 1);
+   var prev = Model.Month.AddMonths(-1); var next = Model.Month.AddMonths(1); }
+<section class="stay-container commerce-page room-calendar"><partial name="_RoleNavigation" />
+<h1>ปฏิทินห้องว่าง</h1>
+<p class="lead-note">ตัวเลขในช่องคือ <strong>ห้องที่ยังว่าง / ห้องที่เปิดขาย</strong> ของแต่ละคืน เมื่อห้องเต็มหรือปิดรับจอง ลูกค้าจะจองคืนนั้นไม่ได้ ระบบนับห้องจากการจองที่รอยืนยัน ยืนยันแล้ว และกำลังเข้าพัก ถ้ายังไม่ได้ตั้งค่า ระบบใช้จำนวนห้องเริ่มต้นของแต่ละประเภท</p>
+<partial name="_CommerceMessage" />
+<p><a class="back-link" asp-action="Index">กลับไปหน้างานการจอง</a></p>
+@if (Model.Hotel is null) {
+    <div class="surface"><p>บัญชีนี้ยังไม่อยู่ในทีมโรงแรมใด ให้ Admin เพิ่มเข้าทีมก่อน</p></div>
+} else {
+    <form method="get" asp-action="Calendar" class="surface calendar-picker">
+        <label>โรงแรม<select name="hotelId" onchange="this.form.submit()">@foreach (var h in Model.Hotels) { <option value="@h.Id" selected="@(h.Id == Model.Hotel.Id)">@h.Name · @h.City</option> }</select></label>
+        <input type="hidden" name="month" value="@Model.Month.ToString("yyyy-MM")" />
+        <div class="calendar-month">
+            @if (Model.Month > thisMonth) { <a class="stay-button secondary small-button" asp-action="Calendar" asp-route-hotelId="@Model.Hotel.Id" asp-route-month="@prev.ToString("yyyy-MM")">เดือนก่อน</a> }
+            <strong>@ThaiDates.MonthYear(Model.Month)</strong>
+            @if (Model.Month < thisMonth.AddMonths(12)) { <a class="stay-button secondary small-button" asp-action="Calendar" asp-route-hotelId="@Model.Hotel.Id" asp-route-month="@next.ToString("yyyy-MM")">เดือนถัดไป</a> }
+        </div>
+    </form>
+
+    <div class="calendar-legend"><span class="cal-chip ok">ว่าง</span><span class="cal-chip low">ใกล้เต็ม (เหลือ ≤ 2)</span><span class="cal-chip full">เต็ม</span><span class="cal-chip closed">ปิดรับจอง</span></div>
+    <div class="surface calendar-scroll">
+        <table class="calendar-grid">
+            <thead><tr><th scope="col">ประเภทห้อง</th>@foreach (var n in Model.Rows.First().Nights) { <th scope="col" class="@(n.Date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "weekend" : "")"><small>@ThaiDates.DayName(n.Date)</small>@n.Date.Day</th> }</tr></thead>
+            <tbody>
+                @foreach (var row in Model.Rows) {
+                    <tr><th scope="row">@row.RoomName</th>
+                        @foreach (var n in row.Nights) {
+                            var css = n.Date < today ? "past" : n.Closed ? "closed" : n.Left == 0 ? "full" : n.Left <= 2 ? "low" : "ok";
+                            <td class="@css" title="@ThaiDates.Long(n.Date) · จองแล้ว @n.Booked จาก @n.Capacity ห้อง @(n.Closed ? "· ปิดรับจอง" : "")">@if (n.Closed) { <span>ปิด</span> } else { <span>@n.Left</span><small>/@n.Capacity</small> }</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" asp-action="SetAllotment" class="surface calendar-form">
+        <h2>เปลี่ยนจำนวนห้อง หรือ ปิด/เปิดรับจอง</h2>
+        <input type="hidden" name="HotelId" value="@Model.Hotel.Id" />
+        <div class="calendar-fields">
+            <label>ประเภทห้อง<select name="RoomType">@foreach (var row in Model.Rows) { <option value="@row.RoomType" selected="@(row.RoomType == Model.Form.RoomType)">@row.RoomName</option> }</select></label>
+            <label>ตั้งแต่คืนวันที่<input type="date" name="From" value="@Model.Form.From.ToString("yyyy-MM-dd")" min="@today.ToString("yyyy-MM-dd")" required /></label>
+            <label>ถึงคืนวันที่<input type="date" name="To" value="@Model.Form.To.ToString("yyyy-MM-dd")" min="@today.ToString("yyyy-MM-dd")" required /></label>
+            <label>จำนวนห้องที่เปิดขาย<input type="number" name="Rooms" min="0" max="@Nontiwat_7362_L002.Models.RoomCapacity.Max" placeholder="เช่น 10" /></label>
+        </div>
+        <div class="calendar-actions">
+            <button class="stay-button" type="submit" name="Action" value="rooms">บันทึกจำนวนห้อง</button>
+            <button class="stay-button secondary" type="submit" name="Action" value="close" onclick="return confirm('ปิดรับจองช่วงวันที่เลือก? การจองที่มีอยู่แล้วจะไม่ถูกยกเลิก')">ปิดรับจอง</button>
+            <button class="stay-button secondary" type="submit" name="Action" value="open">เปิดรับจองอีกครั้ง</button>
+        </div>
+        <p class="muted">ตั้งจำนวนห้องต่ำกว่าห้องที่ถูกจองไปแล้วไม่ได้ · การปิดรับจองไม่ยกเลิกการจองเดิม · ทุกการแก้ไขถูกบันทึกในประวัติการใช้งานระบบ</p>
+    </form>
+}
+</section>

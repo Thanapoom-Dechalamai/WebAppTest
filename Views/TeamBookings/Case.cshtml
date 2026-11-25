@@ -1,0 +1,86 @@
+@model TeamBookingPage
+@using Nontiwat_7362_L002.Services
+@using Nontiwat_7362_L002.Services.Support
+@inject IThaiClock Clock
+@{
+    Layout = "_StayLayout";
+    ViewData["Title"] = "ทำรายการแทนลูกค้า";
+    var order = Model.Order;
+    var caseId = Model.Case.Id;
+}
+<section class="stay-container commerce-page team-booking">
+    <a class="back-link" href="@SupportTicketService.StaffUrl(caseId)">กลับไปที่ ticket @SupportTicketRules.Number(caseId)</a>
+    <h1>ทำรายการแทนลูกค้า</h1>
+    <p>@Model.CustomerName · @Model.Case.Subject</p>
+    <partial name="_CommerceMessage" />
+    @* Above every form: a refused quote must explain itself even when the page shows the booking instead of the quote form. *@
+    <div asp-validation-summary="All" class="validation-errors" role="alert"></div>
+    @if (order is not null) {
+        <div class="surface chat-context">
+            <h2>LG@(order.Id.ToString("D6")) · @order.HotelName</h2>
+            <p>@order.RoomName · @ThaiDates.Long(order.CheckIn) – @ThaiDates.Long(order.CheckOut) · @BookingStatus.Label(order.Status)</p>
+            <p>฿@order.Total.ToString("N2")</p>
+        </div>
+    }
+    @if (!Model.CanChange) {
+        <p class="surface chat-context">เคสนี้ปิดแล้วหรือบัญชีลูกค้าไม่พร้อมทำรายการ</p>
+    } else if (order is null || order.Status == BookingStatus.Cancelled) {
+        <form class="surface form-stack hotel-catalog-editor" method="post" asp-action="Quote" asp-route-id="@caseId">
+            <h2>เสนอราคาให้ลูกค้า</h2>
+            <p class="muted">ตรวจราคาและห้องว่าง แล้วส่งเป็นใบเสนอราคาใน ticket ลูกค้าเป็นคนเลือกวิธีชำระและกดยืนยันเอง ระบบยังไม่หักเงินจนกว่าลูกค้าจะยืนยัน ใบเสนอมีอายุ 24 ชั่วโมงหรือถึงวันเช็กอิน</p>
+            <input asp-for="Booking.RequestId" type="hidden" /><input asp-for="Booking.ExpectedTotal" type="hidden" />
+            <label>โรงแรม<select asp-for="Booking.HotelId" data-team-hotel data-room-endpoint="@Url.Action("Rooms")">
+                @foreach (var hotel in Model.Hotels) { <option value="@hotel.Id">@hotel.Name · @hotel.City</option> }
+            </select></label>
+            <label>ประเภทห้อง<select asp-for="Booking.RoomType" data-team-room>
+                @foreach (var room in Model.Rooms) { <option value="@room.Id">@room.Name</option> }
+            </select></label>
+            <div class="form-pair"><label>เช็กอิน<input asp-for="Booking.CheckIn" asp-format="{0:yyyy-MM-dd}" type="date" /></label>
+                <label>เช็กเอาต์<input asp-for="Booking.CheckOut" asp-format="{0:yyyy-MM-dd}" type="date" /></label></div>
+            <div class="form-pair"><label>จำนวนห้อง<input asp-for="Booking.Rooms" type="number" min="1" max="5" /></label>
+                <label>ผู้เข้าพัก<input asp-for="Booking.Guests" type="number" min="1" max="10" /></label></div>
+            <label>คำขอพิเศษ<textarea asp-for="Booking.SpecialRequest" rows="2" maxlength="300"></textarea></label>
+            <label>โค้ดส่วนลด<input asp-for="Booking.PromotionCode" maxlength="40" /></label>
+            @if (Model.Booking.ExpectedTotal is decimal total) { <p><strong>ยอดที่ตรวจแล้ว ฿@total.ToString("N2")</strong></p> }
+            <div class="role-inline">
+                <button class="stay-button secondary" type="submit">ตรวจราคาและห้องว่าง</button>
+                @if (Model.Booking.ExpectedTotal is not null) {
+                    <button class="stay-button" type="submit" asp-action="SendQuote" asp-route-id="@caseId">ส่งใบเสนอราคาให้ลูกค้า</button>
+                }
+            </div>
+        </form>
+    } else if (BookingRules.CanCancel(order, Clock.Today)) {
+        <form class="surface form-stack hotel-catalog-editor" method="post" enctype="multipart/form-data" asp-action="Edit" asp-route-id="@caseId">
+            <h2>แก้ข้อมูลการจอง</h2>
+            <input type="hidden" name="orderId" value="@order.Id" />
+            <label>ผู้เข้าพัก<input name="guests" type="number" min="1" max="@(order.Rooms * 2)" value="@order.Guests" required /></label>
+            <label>คำขอพิเศษ<textarea name="specialRequest" rows="2" maxlength="300">@order.SpecialRequest</textarea></label>
+            @if (Model.CanChangeEvidence) {
+                <label>เลขที่รายการโอน<input name="paymentRef" maxlength="64" value="@order.PaymentRef" /></label>
+                <label>สลิปใหม่<input name="slip" type="file" accept="image/jpeg,image/png,application/pdf" /></label>
+            }
+            <button class="stay-button" type="submit">บันทึก</button>
+        </form>
+        <form class="surface form-stack hotel-catalog-editor" method="post" asp-action="Cancel" asp-route-id="@caseId" onsubmit="return confirm('ยกเลิกการจองนี้ตามคำขอลูกค้า?')">
+            <h2>ยกเลิกตามคำขอ</h2>
+            <input type="hidden" name="orderId" value="@order.Id" />
+            <label>เหตุผล<input name="reason" maxlength="120" required /></label>
+            <button class="stay-button secondary" type="submit">ยกเลิกการจอง</button>
+        </form>
+    } else {
+        <p>สถานะนี้ใช้แชตประสานงานได้</p>
+    }
+    @if (Model.Quotes.Count > 0) {
+        <section class="surface quote-history" aria-labelledby="quote-history-title">
+            <h2 id="quote-history-title">ใบเสนอราคาใน ticket นี้</h2>
+            <ul>
+                @foreach (var q in Model.Quotes) { var state = QuoteRules.StateOf(q, Clock.UtcNow);
+                    <li><strong>@QuoteRules.Number(q.Id)</strong> · @q.HotelName · @q.RoomName · ฿@q.Total.ToString("N2")
+                        <span class="quote-state" data-state="@state">@(state == QuoteStatus.Open ? "รอลูกค้ายืนยัน" : QuoteStatus.Label(state))</span>
+                        @if (q.OrderId is int oid) { <small>การจอง @("LG" + oid.ToString("D6"))</small> }</li>
+                }
+            </ul>
+        </section>
+    }
+</section>
+<script src="~/js/team-booking.js" asp-append-version="true" defer></script>

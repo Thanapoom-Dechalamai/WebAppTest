@@ -1,0 +1,16 @@
+@model IHotelPickerForm
+@* Hotels a HotelStaff account looks after. Shown only while the role select says HotelStaff (hotel-picker.js); without JS it stays visible. *@
+<fieldset class="mb-3 full-width hotel-picker" data-hotel-picker data-role="@AppRoles.HotelOwner">
+    <legend class="form-label">โรงแรมที่ดูแล</legend>
+    <p class="hotel-picker-help" id="hotel-picker-help">ใช้กับบทบาทพนักงานโรงแรมเท่านั้น พนักงานจะเห็นและจัดการได้เฉพาะการจองของโรงแรมที่เลือก เลือกได้หลายแห่ง</p>
+    <label class="form-label small" for="hotel-filter">ค้นหาโรงแรม</label>
+    <input id="hotel-filter" type="search" class="form-control" placeholder="ชื่อโรงแรมหรือจังหวัด" autocomplete="off" data-hotel-filter />
+    <p class="hotel-picker-count" aria-live="polite" data-hotel-count>เลือกแล้ว @Model.HotelIds.Count แห่ง</p>
+    <div class="hotel-picker-list" role="group" aria-labelledby="hotel-picker-help">
+        @foreach (var h in Model.HotelOptions) {
+            <label class="hotel-picker-item" data-hotel-search="@(h.Name.ToLowerInvariant()) @(h.City.ToLowerInvariant())"><input type="checkbox" name="HotelIds" value="@h.Id" checked="@Model.HotelIds.Contains(h.Id)" /><span>@h.Name</span><small>@h.City</small></label>
+        }
+    </div>
+    <span asp-validation-for="HotelIds" class="text-danger small"></span>
+</fieldset>
+<script src="~/js/hotel-picker.js" asp-append-version="true" defer></script>

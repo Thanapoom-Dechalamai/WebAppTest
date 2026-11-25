@@ -1,0 +1,8 @@
+@model SupportCaseView
+@{ Layout = "_StayLayout"; ViewData["Title"] = "เรื่องที่แจ้ง: " + Model.Case.Subject; }
+<section class="stay-container commerce-page support-page">
+    <a class="back-link" href="/Support">เรื่องที่แจ้งทั้งหมด</a>
+    <h1>แชตกับเจ้าหน้าที่</h1>
+    <partial name="_CommerceMessage" />
+    <partial name="_Thread" model="Model" />
+</section>

@@ -1,0 +1,232 @@
+{
+  "Facts": [
+    {
+      "Id": "th-stay-011",
+      "Category": "river",
+      "ViewType": "river",
+      "HasPool": true,
+      "SourceUrl": "https://www.marriott.com/en-us/hotels/ceimd-le-meridien-chiang-rai-resort-thailand/overview/",
+      "Description": "รีสอร์ตริมแม่น้ำกก มีสวนและสระว่ายน้ำ วิวขึ้นอยู่กับประเภทห้อง",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-013",
+      "Category": "beach",
+      "ViewType": "sea",
+      "HasPool": true,
+      "SourceUrl": "https://www.agoda.com/en-us/nana-beach-hotel/hotel/chumphon-th.html",
+      "Description": "ที่พักบริเวณหาดทุ่งวัวแล่น มีสระว่ายน้ำและพื้นที่สวน",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-015",
+      "Category": "city",
+      "ViewType": "",
+      "HasPool": null,
+      "SourceUrl": "https://www.hopinnhotel.com/our-hotels/hop-inn-kamphaeng-phet",
+      "Description": "โรงแรมในเขตเมืองกำแพงเพชร เหมาะกับการเดินทางเที่ยวในเมือง",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-017",
+      "Category": "city",
+      "ViewType": "",
+      "HasPool": true,
+      "SourceUrl": "https://www.heritagegrandkhonkaen.com/about-us.html",
+      "Description": "โรงแรมในย่านธุรกิจของขอนแก่น มีสระว่ายน้ำกลางแจ้ง",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-022",
+      "Category": "city",
+      "ViewType": "",
+      "HasPool": null,
+      "SourceUrl": "https://www.hopinnhotel.com/our-hotels/hop-inn-lopburi",
+      "Description": "ที่พักในเขตเมืองลพบุรี เดินทางไปยังสถานที่ต่าง ๆ ในเมืองได้สะดวก",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-028",
+      "Category": "river",
+      "ViewType": "river",
+      "HasPool": null,
+      "SourceUrl": "https://www.fortunehotelgroup.com/fortune-riverview-hotel-nakhon-phanom/en/",
+      "Description": "ที่พักริมแม่น้ำโขงในนครพนม เลือกประเภทห้องที่มีวิวแม่น้ำเมื่อต้องการชมวิว",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-029",
+      "Category": "city",
+      "ViewType": "",
+      "HasPool": null,
+      "SourceUrl": "https://www.centrepoint.com/korat/contact",
+      "Description": "โรงแรมใจกลางโคราช บนชั้นบนของศูนย์การค้า Terminal 21",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-037",
+      "Category": "city",
+      "ViewType": "",
+      "HasPool": null,
+      "SourceUrl": "https://all.accor.com/hotel/B346/index.en.shtml",
+      "Description": "ที่พักในย่านรังสิต ใกล้ศูนย์การค้า Future Park และ Zpell",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-039",
+      "Category": "beach",
+      "ViewType": "sea",
+      "HasPool": true,
+      "SourceUrl": "https://www.thesandskhaolak.com/place.php",
+      "Description": "รีสอร์ตริมชายหาดนางทอง เขาหลัก มีพื้นที่พักผ่อนและสระว่ายน้ำ",
+      "SeaDistanceKm": 0
+    },
+    {
+      "Id": "th-stay-040",
+      "Category": "lake",
+      "ViewType": "lake",
+      "HasPool": true,
+      "SourceUrl": "https://www.sripakpra.com/",
+      "Description": "รีสอร์ตใกล้ทะเลน้อย พัทลุง มีที่พักริมทะเลสาบและสระว่ายน้ำ",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-046",
+      "Category": "river",
+      "ViewType": "river",
+      "HasPool": null,
+      "SourceUrl": "https://www.krungsririver.com/",
+      "Description": "โรงแรมในอยุธยา มีห้องที่มองเห็นแม่น้ำป่าสักและสะพาน",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-050",
+      "Category": "beach",
+      "ViewType": "sea",
+      "HasPool": true,
+      "SourceUrl": "https://www.hyatt.com/hyatt-regency/en-US/huahi-hyatt-regency-hua-hin",
+      "Description": "รีสอร์ตติดชายหาดหัวหิน มีสวนและสระว่ายน้ำหลายโซน",
+      "SeaDistanceKm": 0
+    },
+    {
+      "Id": "th-stay-057",
+      "Category": "garden",
+      "ViewType": "golf",
+      "HasPool": true,
+      "SourceUrl": "https://www.eastinhotelsresidences.com/eastinthanacitygolfbangkok/facilities",
+      "Description": "รีสอร์ตในสนามกอล์ฟธนาซิตี้ มีสระว่ายน้ำและวิวสนามกอล์ฟ",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-069",
+      "Category": "river",
+      "ViewType": "river",
+      "HasPool": true,
+      "SourceUrl": "https://viangtakriverside.com/",
+      "Description": "โรงแรมริมแม่น้ำปิงในตัวเมืองตาก มีห้องชมวิวแม่น้ำและสระว่ายน้ำ",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-071",
+      "Category": "beach",
+      "ViewType": "sea",
+      "HasPool": true,
+      "SourceUrl": "https://www.kckohchang.com/",
+      "Description": "รีสอร์ตบริเวณหาดทรายขาว เกาะช้าง มีทางลงชายหาดและสระว่ายน้ำ",
+      "SeaDistanceKm": 0
+    },
+    {
+      "Id": "th-stay-073",
+      "Category": "city",
+      "ViewType": "",
+      "HasPool": null,
+      "SourceUrl": "https://www.centarahotelsresorts.com/centara/cud",
+      "Description": "โรงแรมใจกลางเมืองอุดรธานี ใกล้ศูนย์การค้าเซ็นทรัล",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-090",
+      "Category": "beach",
+      "ViewType": "sea",
+      "HasPool": true,
+      "SourceUrl": "https://www.maldiveschanthaburi.com/?lang=en",
+      "Description": "รีสอร์ตริมชายหาดเจ้าหลาว–แหลมเสด็จ มีสระว่ายน้ำริมทะเล",
+      "SeaDistanceKm": 0
+    },
+    {
+      "Id": "th-stay-094",
+      "Category": "city",
+      "ViewType": "",
+      "HasPool": true,
+      "SourceUrl": "https://www.centarahotelsresorts.com/centara/cko",
+      "Description": "โรงแรมในเมืองโคราช เชื่อมต่อเซ็นทรัลโคราช มีสระว่ายน้ำบนดาดฟ้า",
+      "SeaDistanceKm": null
+    },
+    {
+      "Id": "th-stay-097",
+      "Category": "city",
+      "ViewType": "mountain",
+      "HasPool": true,
+      "SourceUrl": "https://www.booking.com/hotel/th/livist-resort-phetchabun.html",
+      "Description": "ที่พักในเมืองเพชรบูรณ์ มีสระว่ายน้ำและห้องที่มองเห็นแนวภูเขา",
+      "SeaDistanceKm": null
+    }
+  ],
+  "Tags": [
+    {
+      "Id": "th-stay-001",
+      "Theme": "airport",
+      "SourceUrl": "https://www.amari.com/donmuang/at-a-glance"
+    },
+    {
+      "Id": "th-stay-057",
+      "Theme": "airport",
+      "SourceUrl": "https://www.eastinhotelsresidences.com/eastinthanacitygolfbangkok/contact"
+    },
+    {
+      "Id": "th-stay-010",
+      "Theme": "shopping",
+      "SourceUrl": "https://www.uhotelsresorts.com/unimmanchiangmai/attractions/maya-lifestyle-shopping-center"
+    },
+    {
+      "Id": "th-stay-012",
+      "Theme": "shopping",
+      "SourceUrl": "https://grandecentrepointpattaya.com/"
+    },
+    {
+      "Id": "th-stay-029",
+      "Theme": "shopping",
+      "SourceUrl": "https://www.centrepoint.com/korat/contact"
+    },
+    {
+      "Id": "th-stay-037",
+      "Theme": "shopping",
+      "SourceUrl": "https://all.accor.com/hotel/B346/index.en.shtml"
+    },
+    {
+      "Id": "th-stay-073",
+      "Theme": "shopping",
+      "SourceUrl": "https://www.centarahotelsresorts.com/centara/cud"
+    },
+    {
+      "Id": "th-stay-094",
+      "Theme": "shopping",
+      "SourceUrl": "https://www.centarahotelsresorts.com/centara/cko"
+    },
+    {
+      "Id": "th-stay-026",
+      "Theme": "golf",
+      "SourceUrl": "https://www.royalhillsresort.com/en/"
+    },
+    {
+      "Id": "th-stay-057",
+      "Theme": "golf",
+      "SourceUrl": "https://www.eastinhotelsresidences.com/eastinthanacitygolfbangkok/facilities"
+    },
+    {
+      "Id": "th-stay-032",
+      "Theme": "ricefield",
+      "SourceUrl": "https://www.nanseasons.com/roomtypes"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+@model HotelEditorGallery
+@if (ViewData["SavedPhotos"] is IReadOnlyList<HotelGalleryPhoto> photos && photos.Count > 0) {
+    <div class="hotel-editor-thumbnails">
+        @foreach (var photo in photos) {
+            <label>
+                <img src="@photo.Url" alt="@(photo.Credit ?? "รูปที่บันทึกไว้")" loading="lazy" />
+                <span><input type="checkbox" name="RemovePhotoIds" value="@photo.Id" /> นำรูปนี้ออก</span>
+            </label>
+        }
+    </div>
+}
+<div class="form-pair">
+    <div><label asp-for="Urls"></label><textarea asp-for="Urls" rows="3"></textarea><span asp-validation-for="Urls" class="field-error"></span></div>
+    <div><label asp-for="Uploads"></label><input asp-for="Uploads" type="file" multiple accept="image/jpeg,image/png" /><small>JPG หรือ PNG สูงสุด 5 MB ต่อรูป</small><span asp-validation-for="Uploads" class="field-error"></span></div>
+</div>

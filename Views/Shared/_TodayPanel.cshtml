@@ -1,0 +1,38 @@
+@model IReadOnlyList<TodayTile>
+@inject Nontiwat_7362_L002.Services.IThaiClock Clock
+@{
+    // Colour by meaning (back office, 2026-11-22): red = problem, amber = waiting on you, green = money, blue = people, violet = records and figures.
+    // The icon only shows inside the back-office shell (lodgo-a.css section 26); elsewhere it is hidden.
+    static string Tone(TodayTile t)
+    {
+        var l = t.Label;
+        if (l.Contains("ระงับ") || l.Contains("สัญญาณเตือน") || l.Contains("ค้างเกิน")) return "red";
+        if (l.Contains("รอ") || l.Contains("คำขอ") || l.Contains("ยังไม่") || l.Contains("เรื่องที่ลูกค้า") || l.Contains("ครบกำหนด") || l.Contains("ค้างโอน")) return "amber";
+        if (l.Contains("ยอด") || l.Contains("เงิน") || l.Contains("เครดิต")) return "green";
+        if (l.Contains("ผู้ใช้") || l.Contains("แขก") || l.Contains("เข้าพัก") || l.Contains("การเดินทาง")) return "blue";
+        return "violet";
+    }
+    static string Icon(string tone) => tone switch
+    {
+        "red" => "<path d=\"M12 4 3 20h18z\"/><path d=\"M12 10v4M12 17h.01\"/>",
+        "amber" => "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v4l3 2\"/>",
+        "green" => "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M3 10h18M7 15h3\"/>",
+        "blue" => "<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6\"/>",
+        _ => "<path d=\"M4 20V11M10 20V5M16 20v-6M3 20h18\"/>"
+    };
+}
+@if (Model.Count > 0) {
+<section class="today-panel" aria-labelledby="today-title">
+    <div class="today-head"><h2 id="today-title">งานของคุณวันนี้</h2><span>@ThaiDates.Long(Clock.Today)</span></div>
+    <div class="today-tiles">
+        @foreach (var tile in Model) {
+            var tone = Tone(tile);
+            <a class="today-tile tone-@tone@(tile.NeedsAction ? " needs-action" : "")" href="@tile.Url">
+                <span class="today-label"><svg class="today-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">@Html.Raw(Icon(tone))</svg>@tile.Label</span>
+                <strong class="today-value">@tile.Value</strong>
+                <span class="today-hint">@if (tile.NeedsAction) { <span class="today-flag">ต้องจัดการ</span> }@tile.Hint</span>
+            </a>
+        }
+    </div>
+</section>
+}

@@ -1,0 +1,144 @@
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@model HotelCatalogForm
+@{
+    Layout = "_StayLayout";
+    var id = ViewContext.RouteData.Values["id"]?.ToString();
+    var creating = id is null;
+    var originalCity = ViewData["OriginalCity"] as string;
+    var savedCover = ViewData["SavedCover"] as string;
+    ViewData["Title"] = creating ? "เพิ่มโรงแรม" : "แก้ไขข้อมูลโรงแรม";
+    ViewDataDictionary RoomView(string index, string? roomId) => new(ViewData)
+    {
+        TemplateInfo = { HtmlFieldPrefix = $"Rooms[{index}]" },
+        ["SavedPhotos"] = roomId is null ? Array.Empty<HotelGalleryPhoto>() : Model.SavedPhotos.Where(photo => photo.RoomId == roomId).ToArray()
+    };
+}
+<section class="stay-container commerce-page">
+    <a class="back-link" asp-action="Index">กลับหน้าจัดการโรงแรม</a>
+    <h1>@ViewData["Title"]</h1>
+    <nav class="role-toolbar hotel-editor-jump" aria-label="ส่วนข้อมูลโรงแรม">
+        <a href="#hotel-overview">เกี่ยวกับที่พัก</a>
+        <a href="#hotel-images">รูปภาพ</a>
+        <a href="#hotel-environment">บรรยากาศ</a>
+        <a href="#hotel-rooms">ห้องพักและราคา</a>
+        @if (!creating && Model.IsActive) {
+            <a asp-controller="Stays" asp-action="Details" asp-route-id="@id">ดูหน้าที่พัก</a>
+        }
+    </nav>
+    <form class="surface form-stack hotel-catalog-editor hotel-full-editor" method="post" enctype="multipart/form-data"
+          asp-action="@(creating ? "Create" : "Edit")" asp-route-id="@id">
+        <div asp-validation-summary="All" class="validation-errors" role="alert"></div>
+        <section id="hotel-overview" class="hotel-editor-section" aria-labelledby="hotel-overview-title">
+            <h2 id="hotel-overview-title">เกี่ยวกับที่พัก</h2>
+            <div class="form-pair">
+                <div><label asp-for="Name"></label><input asp-for="Name" required /><span asp-validation-for="Name" class="field-error"></span></div>
+                <div>
+                    <label asp-for="City"></label>
+                    <select asp-for="City" required>
+                        <option value="">เลือกจังหวัด</option>
+                        @if (!string.IsNullOrWhiteSpace(originalCity) && !ThaiProvinces.All.Contains(originalCity)) {
+                            <option value="@originalCity">@originalCity (ข้อมูลเดิม)</option>
+                        }
+                        @foreach (var province in ThaiProvinces.All) { <option value="@province">@province</option> }
+                    </select>
+                    <span asp-validation-for="City" class="field-error"></span>
+                </div>
+            </div>
+            <div>
+                <label asp-for="Price">ราคาอ้างอิงห้องมาตรฐาน (บาทต่อคืน)</label>
+                <input asp-for="Price" type="number" min="0" step="1" required aria-describedby="base-rate-help" />
+                <small id="base-rate-help">ใช้กับห้องมาตรฐาน ถ้ากำหนดราคาแยกในหมวดห้องพักด้านล่าง ค่านี้ใช้ 0 ได้</small>
+                <span asp-validation-for="Price" class="field-error"></span>
+            </div>
+            <div><label asp-for="Description"></label><textarea asp-for="Description" rows="5"></textarea><span asp-validation-for="Description" class="field-error"></span></div>
+            <fieldset class="hotel-editor-amenities">
+                <legend>สิ่งอำนวยความสะดวก</legend>
+                <div>
+                    @foreach (var amenity in Nontiwat_7362_L002.Services.HotelCatalogRules.AmenityOptions) {
+                        <label class="role-checkbox"><input type="checkbox" name="Amenities" value="@amenity" checked="@Model.Amenities.Contains(amenity)" /><span>@amenity</span></label>
+                    }
+                </div>
+                <span asp-validation-for="Amenities" class="field-error"></span>
+            </fieldset>
+        </section>
+        <section id="hotel-images" class="hotel-editor-section" aria-labelledby="hotel-images-title">
+            <h2 id="hotel-images-title">รูปภาพโรงแรม</h2>
+            @if (!string.IsNullOrWhiteSpace(savedCover)) {
+                <img class="hotel-editor-cover" src="@savedCover" alt="รูปปกปัจจุบัน" loading="lazy" />
+            }
+            <div class="form-pair">
+                <div><label asp-for="PhotoUrl">URL รูปปก</label><input asp-for="PhotoUrl" inputmode="url" /><span asp-validation-for="PhotoUrl" class="field-error"></span></div>
+                <div><label asp-for="CoverUpload">อัปโหลดรูปปก</label><input asp-for="CoverUpload" type="file" accept="image/jpeg,image/png" /><small>รูปที่อัปโหลดใหม่จะแทนรูปปกเดิม</small><span asp-validation-for="CoverUpload" class="field-error"></span></div>
+            </div>
+            <fieldset>
+                <legend>แกลเลอรีโรงแรม</legend>
+                @await Html.PartialAsync("_EditorGallery", Model.Gallery, new ViewDataDictionary(ViewData)
+                {
+                    TemplateInfo = { HtmlFieldPrefix = "Gallery" },
+                    ["SavedPhotos"] = Model.SavedPhotos.Where(photo => photo.RoomId is null).ToArray()
+                })
+            </fieldset>
+        </section>
+        <section id="hotel-environment" class="hotel-editor-section" aria-labelledby="hotel-environment-title">
+            <h2 id="hotel-environment-title">บรรยากาศและพื้นที่ใกล้เคียง</h2>
+            <div class="form-pair">
+                <div><label asp-for="Environment!.Category">หมวดบรรยากาศ</label><select asp-for="Environment!.Category">
+                    <option value="">ยังไม่ระบุ</option>
+                    @foreach (var item in StayEnvironmentOptions.Categories) { <option value="@item.Key">@item.Value</option> }
+                </select></div>
+                <div><label asp-for="Environment!.ViewType">วิวหลัก</label><select asp-for="Environment!.ViewType">
+                    <option value="">ยังไม่ระบุ</option>
+                    @foreach (var item in StayEnvironmentOptions.Views) { <option value="@item.Key">@item.Value</option> }
+                </select></div>
+                <div><label asp-for="Environment!.HasPool">สระว่ายน้ำ</label><select asp-for="Environment!.HasPool">
+                    <option value="">ยังไม่ระบุ</option><option value="true">มีสระว่ายน้ำ</option><option value="false">ไม่มีสระว่ายน้ำ</option>
+                </select></div>
+                <div><label asp-for="Environment!.SeaDistanceKm">ระยะห่างจากทะเล (กม.)</label><input asp-for="Environment!.SeaDistanceKm" type="number" min="0" max="2000" step="0.001" /></div>
+                <div><label asp-for="Environment!.ForestDistanceKm">ระยะห่างจากป่า (กม.)</label><input asp-for="Environment!.ForestDistanceKm" type="number" min="0" max="2000" step="0.001" /></div>
+                <div><label asp-for="Environment!.SourceUrl">ลิงก์อ้างอิงบรรยากาศ</label><input asp-for="Environment!.SourceUrl" type="url" /></div>
+            </div>
+            <div><label asp-for="Environment!.ViewDescription">รายละเอียดวิวและพื้นที่โดยรอบ</label><textarea asp-for="Environment!.ViewDescription" rows="4"></textarea></div>
+        </section>
+        <section id="hotel-rooms" class="hotel-editor-section" aria-labelledby="hotel-rooms-title">
+            <h2 id="hotel-rooms-title">ประเภทห้องและราคา</h2>
+            <p>ราคาที่กรอกเป็นราคาต่อห้องต่อคืน หน้าที่พักแสดงราคาเริ่มต้นจากห้องที่เปิดขายราคาต่ำสุด</p>
+            <div class="hotel-editor-rooms" data-room-rows>
+                @for (var index = 0; index < Model.Rooms.Count; index++) {
+                    @await Html.PartialAsync("_EditorRoom", Model.Rooms[index], RoomView(index.ToString(), Model.Rooms[index].Id))
+                }
+            </div>
+            <button class="stay-button secondary" type="button" data-room-add>เพิ่มประเภทห้อง</button>
+            @if (creating) { <small>หากยังไม่เพิ่มประเภทห้อง โรงแรมจะใช้ห้องมาตรฐานและราคาอ้างอิง</small> }
+        </section>
+        <div class="role-toolbar">
+            @if (creating) {
+                <label class="role-checkbox hotel-catalog-publish"><input asp-for="IsActive" /><span>เปิดแสดงบนหน้าเว็บและรับจอง</span></label>
+            }
+            <button class="stay-button" type="submit">บันทึกข้อมูลโรงแรม</button>
+        </div>
+    </form>
+    <template id="hotel-room-template">
+        @await Html.PartialAsync("_EditorRoom", new HotelEditorRoom { Capacity = 1 }, RoomView("__index__", null))
+    </template>
+    @if (!creating) {
+        <details class="hotel-editor-tools">
+            <summary>เครื่องมือจัดการแยก</summary>
+            <div class="role-toolbar">
+                <a asp-controller="HotelPhotos" asp-action="Index" asp-route-id="@id">รูปภาพและเครดิตภาพ</a>
+                <a asp-controller="StayEnvironment" asp-action="Edit" asp-route-id="@id">บรรยากาศและพื้นที่ใกล้เคียง</a>
+                <a asp-controller="HotelRooms" asp-action="Index" asp-route-id="@id">รายการประเภทห้อง</a>
+            </div>
+        </details>
+        <div class="role-toolbar hotel-catalog-status">
+            <span>@(Model.IsActive ? "สถานะ: แสดงบนหน้าเว็บ" : "สถานะ: ซ่อนจากหน้าเว็บ")</span>
+            @if (Model.IsActive) {
+                <a class="stay-button secondary" asp-action="Archive" asp-route-id="@id">นำออกจากหน้าเว็บ</a>
+            } else {
+                <form method="post" asp-action="Restore" asp-route-id="@id"><button class="stay-button secondary" type="submit">เปิดแสดงอีกครั้ง</button></form>
+            }
+        </div>
+    }
+</section>
+@section Scripts {
+    <script src="~/js/hotel-catalog-editor.js" asp-append-version="true" defer></script>
+}

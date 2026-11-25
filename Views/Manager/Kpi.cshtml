@@ -1,0 +1,39 @@
+@model Nontiwat_7362_L002.Services.KpiPage
+@using Nontiwat_7362_L002.Services
+@using System.Globalization
+@{ Layout = "_StayLayout"; ViewData["Title"] = "Manager · KPI";
+   string Pct(double? v) => v is null ? "—" : v.Value.ToString("0.#", CultureInfo.InvariantCulture) + "%";
+   string Raw(double? v) => v is null ? "" : v.Value.ToString("0.##", CultureInfo.InvariantCulture); }
+<section class="stay-container commerce-page kpi-page" data-days="@Model.Days" data-bookings="@Model.Bookings" data-cancelled="@Model.Cancelled" data-noshow="@Model.NoShow"
+    data-avg-confirm="@Raw(Model.AvgConfirmHours)" data-review-count="@Model.RealReviewCount">
+<partial name="_RoleNavigation" />
+<h1>KPI การจอง</h1>
+<p class="lead-note">นับจากการจองที่สร้างใน @Model.Days วันล่าสุด · อัตราที่หารด้วย 0 แสดงเป็น "—"</p>
+<div class="kpi-toolbar">
+    <a class="back-link" asp-action="Index">จัดการบัญชีทีมงาน</a>
+    <nav class="case-tabs" aria-label="ช่วงเวลา">
+        @foreach (var d in KpiService.AllowedDays) { <a class="@(Model.Days == d ? "is-active" : "")" href="/Manager/Kpi?days=@d" aria-current="@(Model.Days == d ? "page" : null)">@d วัน</a> }
+    </nav>
+</div>
+<div class="kpi-grid">
+    <div class="surface kpi-card"><span>จำนวนการจอง</span><strong>@Model.Bookings.ToString("N0")</strong><small>ยกเลิก @Model.Cancelled · ไม่มาเข้าพัก @Model.NoShow</small></div>
+    <div class="surface kpi-card"><span>อัตรายกเลิก</span><strong>@Pct(Model.CancelRate)</strong><small>รวมลูกค้ายกเลิกเอง โรงแรมปฏิเสธ และหมดเวลา</small></div>
+    <div class="surface kpi-card"><span>อัตราไม่มาเข้าพัก</span><strong>@Pct(Model.NoShowRate)</strong><small>โรงแรมบันทึกว่าไม่มา</small></div>
+    <div class="surface kpi-card"><span>เวลายืนยันเฉลี่ย</span><strong>@KpiService.Hours(Model.AvgConfirmHours)</strong><small>จากจองถึงโรงแรมยืนยัน · @Model.ConfirmedCount รายการ</small></div>
+    <div class="surface kpi-card @(Model.StaleRequests > 0 ? "kpi-alert" : "")"><span>คำขอค้างเกิน 24 ชม.</span><strong>@Model.StaleRequests.ToString("N0")</strong><small>ตอนนี้ (ไม่ขึ้นกับช่วงเวลา) · Lodgo support เป็นผู้ติดตามโรงแรม</small></div>
+    <div class="surface kpi-card"><span>คะแนนรีวิวจริงเฉลี่ย</span>@if (Model.RealReviewAverage is double avg) { <strong>@avg.ToString("0.0", CultureInfo.InvariantCulture) / 5</strong><small>จาก @Model.RealReviewCount รีวิว</small> } else { <strong>—</strong><small>ยังไม่มีรีวิวจริงในช่วงนี้</small> }</div>
+</div>
+<div class="kpi-two">
+    <div class="surface"><h2>การใช้โปรโมชั่น</h2>
+        <dl class="kpi-list"><dt>ใช้โค้ด</dt><dd>@Model.PromoUses.ToString("N0") ครั้ง</dd><dt>ส่วนลดรวม</dt><dd>฿@Model.PromoDiscount.ToString("N2")</dd><dt>ยอดขายที่ใช้โค้ด</dt><dd>฿@Model.PromoSales.ToString("N2")</dd></dl>
+        <a class="text-link" asp-action="Promotions">จัดการโปรโมชั่น</a>
+    </div>
+    <div class="surface table-scroll"><h2>โรงแรมที่ยืนยันช้าที่สุด</h2>
+        @if (Model.Slowest.Count == 0) { <p class="muted">ยังไม่มีโรงแรมที่ยืนยันอย่างน้อย 2 รายการในช่วงนี้</p> } else {
+        <table class="ledger-table"><thead><tr><th scope="col">อันดับ</th><th scope="col">โรงแรม</th><th scope="col">เวลาเฉลี่ย</th><th scope="col">ยืนยัน</th></tr></thead><tbody>
+        @for (var i = 0; i < Model.Slowest.Count; i++) { var h = Model.Slowest[i]; <tr><td>@(i + 1)</td><td>@h.Name</td><td>@KpiService.Hours(h.AvgHours)</td><td>@h.Confirmed</td></tr> }
+        </tbody></table> }
+    </div>
+</div>
+@if (Model.RealReviewAverage is null) { <p class="muted kpi-note">ยังไม่มีรีวิวจากผู้เข้าพักในช่วงนี้</p> }
+</section>

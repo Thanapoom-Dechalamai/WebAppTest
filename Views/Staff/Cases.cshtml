@@ -1,0 +1,255 @@
+@model SupportInboxPage
+@using Nontiwat_7362_L002.Services
+@using Nontiwat_7362_L002.Services.Support
+@inject IThaiClock Clock
+@*
+  Ticket ลูกค้า (2026-11-25, owner's inbox reference): filters · ticket list · chat · ticket panel on one page.
+  ?view= picks the list, ?q= searches it, ?id= opens a ticket. Every form posts back with the same three so
+  the page comes back where it was. CSS: .tk-* in commerce.css; polling: support-chat.js.
+*@
+@{
+    Layout = "_StayLayout";
+    var selected = Model.Selected;
+    var ticket = selected?.Thread.Case;
+    ViewData["Title"] = selected is null ? "Ticket ลูกค้า" : $"{selected.Number} · {ticket!.Subject}";
+    var today = Clock.Today;
+    string Link(int? id, string? view = null, bool keepQuery = true) =>
+        "/Staff/Cases?view=" + (view ?? Model.View)
+        + (keepQuery && Model.Query is not null ? "&q=" + Uri.EscapeDataString(Model.Query) : "")
+        + (id is int i ? "&id=" + i : "");
+    string When(DateTime utc) { var local = utc.AddHours(7); return local.Date == today ? local.ToString("HH:mm") + " น." : ThaiDates.Short(local); }
+    string Full(DateTime utc) { var local = utc.AddHours(7); return ThaiDates.Long(local) + " " + local.ToString("HH:mm") + " น."; }
+    var closed = ticket?.Status == SupportStatus.Closed;
+    var mine = ticket?.AssigneeUserId == Model.ActorId;
+}
+<section class="stay-container commerce-page tk-page"><partial name="_RoleNavigation" />
+    <header class="tk-head">
+        <h1>Ticket ลูกค้า</h1>
+        <partial name="_CommerceMessage" />
+    </header>
+    <div class="tk-shell @(selected is null ? "" : "has-ticket")">
+        <nav class="tk-filters" aria-label="กรอง ticket">
+            @foreach (var v in Model.Views) {
+                var on = v.View == Model.View;
+                <a class="tk-filter @(on ? "is-on" : "")" href="@Link(ticket?.Id, v.View, keepQuery: false)" aria-current="@(on ? "page" : null)">
+                    @switch (v.View) {
+                        case SupportInboxView.Unassigned: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h4l1.5 3h5L16 13h4"/><path d="M5.5 6h13L21 13v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/></svg>
+                            break;
+                        case SupportInboxView.Mine: <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.4-6 8-6s6.8 2 8 6"/></svg>
+                            break;
+                        case SupportInboxView.Open: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                            break;
+                        default: <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
+                            break;
+                    }
+                    <span>@v.Label</span><b class="tk-count">@v.Count</b>
+                </a>
+            }
+        </nav>
+
+        <section class="tk-list" aria-labelledby="tk-list-title">
+            <h2 id="tk-list-title" class="tk-list-title">@SupportInboxView.Label(Model.View)</h2>
+            <form class="tk-search" method="get" action="/Staff/Cases" role="search">
+                <input type="hidden" name="view" value="@Model.View" />
+                <label class="visually-hidden" for="tk-q">ค้นหา ticket</label>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <input id="tk-q" type="search" name="q" value="@Model.Query" maxlength="@SupportTicketRules.MaxSearch" placeholder="เลข ticket ชื่อ อีเมล หรือเลขการจอง" autocomplete="off" />
+                <button class="visually-hidden" type="submit">ค้นหา</button>
+            </form>
+            @if (Model.Query is not null) {
+                <p class="tk-list-meta">พบ @Model.Tickets.Count รายการจาก "@Model.Query" <a class="text-link" href="@Link(ticket?.Id, keepQuery: false)">ล้างคำค้น</a></p>
+            }
+            @if (Model.Tickets.Count == 0) {
+                <p class="tk-empty-list">@(Model.Query is null ? "ไม่มี ticket ในรายการนี้" : "ไม่พบ ticket ที่ตรงกับคำค้น")</p>
+            } else {
+                <ul class="tk-rows">
+                    @foreach (var row in Model.Tickets) {
+                        var on = row.Case.Id == ticket?.Id;
+                        <li><a class="tk-row @(on ? "is-on" : "")" href="@Link(row.Case.Id)" aria-current="@(on ? "page" : null)">
+                            <span class="tk-avatar" aria-hidden="true">@row.Initials</span>
+                            <span class="tk-row-main">
+                                <span class="tk-row-top"><strong>@row.CustomerName</strong><time datetime="@row.LastAtUtc.ToString("o")">@When(row.LastAtUtc)</time></span>
+                                <span class="tk-row-subject"><span class="tk-number">@row.Number</span> @row.Case.Subject</span>
+                                <span class="tk-row-bottom"><span class="tk-row-preview">@row.Preview</span>
+                                    @if (row.Unread > 0) { <b class="tk-unread" title="ข้อความใหม่จากลูกค้า">@row.Unread<span class="visually-hidden"> ข้อความใหม่</span></b> }
+                                </span>
+                                <span class="tk-row-meta"><span class="tk-chip" data-status="@row.Case.Status">@SupportStatus.Label(row.Case.Status)</span>
+                                    <span>@(row.AssigneeName ?? "ยังไม่มีคนรับ")</span></span>
+                            </span>
+                        </a></li>
+                    }
+                </ul>
+                @if (Model.Tickets.Count >= Nontiwat_7362_L002.Data.Support.SupportInboxQuery.PageSize) {
+                    <p class="tk-list-meta">แสดง @Model.Tickets.Count รายการล่าสุด ใช้ช่องค้นหาเพื่อหา ticket ที่เก่ากว่า</p>
+                }
+            }
+        </section>
+
+        <div class="tk-detail">
+        @if (selected is not null && ticket is not null) {
+            var order = selected.Thread.Order;
+            <section class="tk-chat" aria-labelledby="tk-title">
+                <header class="tk-chat-head">
+                    <a class="tk-back" href="@Link(null)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>กลับไปรายการ</a>
+                    <div class="tk-chat-title">
+                        <h2 id="tk-title">@ticket.Subject</h2>
+                        <p><span class="tk-number">@selected.Number</span> · @selected.Thread.CustomerName · <span class="tk-chip" data-status="@ticket.Status" data-chat-label>@SupportStatus.Label(ticket.Status)</span></p>
+                    </div>
+                    <div class="tk-chat-actions">
+                        @if (!closed && !mine) {
+                            <form method="post" asp-controller="Staff" asp-action="Assign">
+                                <input type="hidden" name="id" value="@ticket.Id" /><input type="hidden" name="to" value="@Model.ActorId" />
+                                <input type="hidden" name="view" value="@Model.View" /><input type="hidden" name="q" value="@Model.Query" />
+                                <button class="stay-button" type="submit">รับ ticket นี้</button>
+                            </form>
+                        }
+                        @if (!closed) {
+                            <form method="post" asp-controller="Staff" asp-action="Close" onsubmit="return confirm('ปิด ticket นี้? ลูกค้าจะตอบต่อในเรื่องนี้ไม่ได้')">
+                                <input type="hidden" name="id" value="@ticket.Id" />
+                                <input type="hidden" name="view" value="@Model.View" /><input type="hidden" name="q" value="@Model.Query" />
+                                <button class="stay-button secondary" type="submit">ปิด ticket</button>
+                            </form>
+                        }
+                    </div>
+                </header>
+                <div class="chat-messages tk-messages" data-chat-feed="@Url.Action("Messages", "Staff", new { id = ticket.Id })" role="log" aria-live="polite" aria-label="ข้อความใน ticket">
+                    <partial name="~/Views/Support/_Messages.cshtml" model="selected.Thread" view-data='new ViewDataDictionary(ViewData) { ["AsStaff"] = true }' />
+                </div>
+                @if (closed) {
+                    <p class="tk-closed">ticket นี้ปิดแล้ว ถ้าลูกค้ามีปัญหาต่อ ลูกค้าจะเปิด ticket ใหม่</p>
+                } else {
+                    <form class="chat-composer tk-composer" method="post" enctype="multipart/form-data" asp-controller="Staff" asp-action="Answer">
+                        <input type="hidden" name="id" value="@ticket.Id" />
+                        <input type="hidden" name="view" value="@Model.View" /><input type="hidden" name="q" value="@Model.Query" />
+                        <label for="tk-body">ตอบลูกค้า</label>
+                        <textarea id="tk-body" name="body" rows="3" maxlength="@SupportService.MaxBody" placeholder="พิมพ์ข้อความถึงลูกค้า"></textarea>
+                        <div class="tk-composer-bar">
+                            <label class="tk-file">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5l-8.2 8.2a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.4 8.4a1.7 1.7 0 0 1-2.4-2.4l7.7-7.7"/></svg>
+                                <span>แนบไฟล์</span>
+                                <input type="file" name="attachment" accept="image/jpeg,image/png,application/pdf" aria-describedby="tk-file-hint" />
+                            </label>
+                            <button class="stay-button" type="submit">ส่งข้อความ</button>
+                        </div>
+                        <p class="tk-hint" id="tk-file-hint">แนบ JPG, PNG หรือ PDF ไม่เกิน 5 MB</p>
+                        @if (ticket.AssigneeUserId is null) { <p class="tk-hint">เมื่อส่งคำตอบ ticket นี้จะเป็นของคุณ</p> }
+                    </form>
+                }
+            </section>
+
+            <aside class="tk-info" aria-label="ข้อมูล ticket">
+                <section class="tk-card">
+                    <h3>Ticket</h3>
+                    <dl class="tk-facts">
+                        <div><dt>เลข ticket</dt><dd class="tk-number">@selected.Number</dd></div>
+                        <div><dt>สถานะ</dt><dd><span class="tk-chip" data-status="@ticket.Status">@SupportStatus.Label(ticket.Status)</span></dd></div>
+                        <div><dt>หัวข้อ</dt><dd>@SupportTopic.Label(ticket.Topic)</dd></div>
+                        <div><dt>เปิดเมื่อ</dt><dd>@Full(ticket.CreatedAtUtc)</dd></div>
+                        <div><dt>อัปเดตล่าสุด</dt><dd>@Full(ticket.UpdatedAtUtc)</dd></div>
+                    </dl>
+                </section>
+
+                <section class="tk-card">
+                    <h3>ผู้รับผิดชอบ</h3>
+                    @if (selected.Assignee is { } owner) {
+                        <p class="tk-person"><span class="tk-avatar small" aria-hidden="true">@SupportTicketRules.Initials(owner.Name)</span>
+                            <span><strong>@(owner.Name + (owner.Id == Model.ActorId ? " (คุณ)" : ""))</strong>
+                            @if (!owner.CanOwn) { <small class="tk-warn">บัญชีนี้ไม่ได้เป็น Support หรือ Admin ที่ใช้งานอยู่แล้ว ควรมอบให้คนอื่น</small> }</span></p>
+                    } else if (ticket.AssigneeUserId is not null) {
+                        <p class="tk-warn">ผู้รับผิดชอบเดิมถูกลบออกจากระบบแล้ว</p>
+                    } else {
+                        <p class="tk-muted">ยังไม่มีคนรับ</p>
+                    }
+                    @if (!closed) {
+                        <form class="tk-assign" method="post" asp-controller="Staff" asp-action="Assign">
+                            <input type="hidden" name="id" value="@ticket.Id" />
+                            <input type="hidden" name="view" value="@Model.View" /><input type="hidden" name="q" value="@Model.Query" />
+                            <label for="tk-to">มอบให้</label>
+                            <select id="tk-to" name="to">
+                                <option value="" selected="@(ticket.AssigneeUserId is null)">ยังไม่มีคนรับ</option>
+                                @foreach (var o in selected.Owners) {
+                                    <option value="@o.Id" selected="@(o.Id == ticket.AssigneeUserId)">@(o.Name + (o.Id == Model.ActorId ? " (คุณ)" : "") + " · " + (o.Role == AppRoles.Admin ? "Admin" : "Support"))</option>
+                                }
+                            </select>
+                            <button class="stay-button secondary" type="submit">บันทึก</button>
+                        </form>
+                    }
+                </section>
+
+                <section class="tk-card">
+                    <h3>ลูกค้า</h3>
+                    <p class="tk-person"><span class="tk-avatar small" aria-hidden="true">@SupportTicketRules.Initials(selected.Thread.CustomerName)</span>
+                        <span><strong>@selected.Thread.CustomerName</strong><small>@selected.Thread.CustomerEmail</small></span></p>
+                    <a class="text-link" href="/Staff/Index?search=@Uri.EscapeDataString(selected.Thread.CustomerEmail)">ดูการจองทั้งหมดของลูกค้าคนนี้</a>
+                </section>
+
+                <section class="tk-card">
+                    <h3>การจองที่เกี่ยวข้อง</h3>
+                    @if (order is not null) {
+                        <p><strong>@("LG" + order.Id.ToString("D6") + " · " + order.HotelName)</strong><br />@ThaiDates.Long(order.CheckIn) – @ThaiDates.Long(order.CheckOut)<br />@BookingStatus.Label(order.Status) · ฿@order.Total.ToString("N2")</p>
+                    } else if (ticket.HotelId is not null) {
+                        <p>คำขอจองที่พัก<br />@ticket.CheckIn?.ToString("dd/MM/yyyy") – @ticket.CheckOut?.ToString("dd/MM/yyyy")</p>
+                    } else {
+                        <p class="tk-muted">ไม่ได้ผูกกับการจอง</p>
+                    }
+                    <a class="stay-button secondary" asp-controller="TeamBookings" asp-action="Case" asp-route-id="@ticket.Id.ToString()">@(order is null ? "เสนอราคาให้ลูกค้า" : "จัดการการจอง")</a>
+                </section>
+
+                <section class="tk-card">
+                    <h3>ใบเสนอราคา</h3>
+                    @if (selected.Thread.Quotes.Count == 0) {
+                        <p class="tk-muted">ยังไม่ได้ส่ง</p>
+                    } else {
+                        <ul class="tk-mini">
+                            @foreach (var q in selected.Thread.Quotes) { var state = QuoteRules.StateOf(q, Clock.UtcNow);
+                                <li><span><span class="tk-number">@QuoteRules.Number(q.Id)</span> ฿@q.Total.ToString("N2")</span>
+                                    <span class="tk-chip" data-quote="@state">@(state == QuoteStatus.Open ? "รอลูกค้ายืนยัน" : QuoteStatus.Label(state))</span></li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                <section class="tk-card">
+                    <h3>Ticket อื่นของลูกค้าคนนี้</h3>
+                    @if (selected.OtherTickets.Count == 0) {
+                        <p class="tk-muted">ไม่มี</p>
+                    } else {
+                        <ul class="tk-mini">
+                            @foreach (var other in selected.OtherTickets) {
+                                <li><a href="@Link(other.Case.Id, SupportTicketRules.ViewOf(other.Case, Model.ActorId), keepQuery: false)"><span class="tk-number">@other.Number</span> @other.Case.Subject</a>
+                                    <span class="tk-chip" data-status="@other.Case.Status">@SupportStatus.Label(other.Case.Status)</span></li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                <section class="tk-card">
+                    <h3>ประวัติการมอบหมาย</h3>
+                    @if (selected.History.Count == 0) {
+                        <p class="tk-muted">ยังไม่มีการมอบหมาย</p>
+                    } else {
+                        <ol class="tk-history">
+                            @foreach (var h in selected.History) {
+                                <li><strong>@SupportAssignmentKind.Label(h.Row.Kind)</strong>
+                                    <span>@(h.Row.Kind switch {
+                                        SupportAssignmentKind.Release => h.Row.FromUserId == h.Row.ActorUserId ? $"{h.ActorName}" : $"{h.ActorName} ปล่อยจาก {h.FromName}",
+                                        SupportAssignmentKind.Suspended or SupportAssignmentKind.RoleChanged => $"{h.FromName} · บันทึกโดย {h.ActorName}",
+                                        SupportAssignmentKind.Assign => $"{h.ActorName} มอบให้ {h.ToName}",
+                                        _ => h.FromName is null ? $"{h.ToName}" : $"{h.ToName} รับต่อจาก {h.FromName}"
+                                    })</span>
+                                    <time datetime="@h.Row.CreatedAtUtc.ToString("o")">@Full(h.Row.CreatedAtUtc)</time></li>
+                            }
+                        </ol>
+                    }
+                </section>
+            </aside>
+        } else {
+            <section class="tk-placeholder" aria-label="ยังไม่ได้เลือก ticket">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>
+                <p>เลือก ticket จากรายการเพื่ออ่านและตอบลูกค้า</p>
+            </section>
+        }
+        </div>
+    </div>
+</section>
+<script src="~/js/support-chat.js" asp-append-version="true" defer></script>

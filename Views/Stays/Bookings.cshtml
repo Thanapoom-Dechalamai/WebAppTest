@@ -1,0 +1,35 @@
+@model BookingListPage
+@{ Layout = "_StayLayout"; ViewData["Title"] = "การจองของฉัน";
+   var tabs = new[] { (BookingTabs.Upcoming, "กำลังจะมาถึง", Model.UpcomingCount), (BookingTabs.Finished, "เสร็จสมบูรณ์", Model.FinishedCount), (BookingTabs.Cancelled, "ยกเลิก", Model.CancelledCount) };
+   string? lastGroup = null; }
+<section class="stay-container commerce-page my-trips"><h1>การจองของฉัน</h1><p class="booking-account">รายการของ <strong>@User.Identity?.Name</strong></p><partial name="_CommerceMessage" />
+    <nav class="trip-tabs" aria-label="กลุ่มการจอง">@foreach (var t in tabs) { <a class="@(Model.Tab == t.Item1 ? "is-active" : "")" aria-current="@(Model.Tab == t.Item1 ? "page" : null)" asp-action="Bookings" asp-route-tab="@t.Item1">@t.Item2 <span>@t.Item3</span></a> }</nav>
+    <form method="get" class="trip-toolbar"><input type="hidden" name="tab" value="@Model.Tab" />
+        <label class="trip-sort">เรียงตาม<select name="sort" onchange="this.form.submit()"><option value="checkin" selected="@(Model.Sort == "checkin")">วันเช็กอิน</option><option value="booked" selected="@(Model.Sort == "booked")">วันที่จองล่าสุด</option></select></label>
+        <label class="trip-search"><span class="visually-hidden">ค้นหา</span><input type="search" name="q" value="@Model.Query" maxlength="100" placeholder="ค้นหาด้วยหมายเลขการจอง (LG000206) หรือชื่อที่พัก" /></label>
+        <button class="stay-button secondary" type="submit">ค้นหา</button>
+    </form>
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="empty-bookings surface">@if (!string.IsNullOrEmpty(Model.Query)) { <h2>ไม่พบการจองที่ตรงกับ "@Model.Query"</h2><p>ลองค้นหาด้วยหมายเลขการจองหรือชื่อที่พักอีกครั้ง</p><a class="stay-button secondary" asp-action="Bookings" asp-route-tab="@Model.Tab">ล้างการค้นหา</a> } else if (Model.Tab == BookingTabs.Upcoming) { <h2>ทริปถัดไปกำลังรอคุณอยู่</h2><p>ยังไม่มีการจองที่กำลังจะมาถึง เลือกที่พักแล้วติดต่อเจ้าหน้าที่เพื่อส่งคำขอจอง</p><a class="stay-button" asp-controller="Account" asp-action="Index" asp-fragment="hotels">ค้นหาที่พัก</a> } else { <h2>ยังไม่มีรายการในหมวดนี้</h2><p>รายการจะย้ายมาที่นี่อัตโนมัติเมื่อเข้าพักเสร็จหรือถูกยกเลิก</p> }</div>
+    } else {
+        <div class="trip-list">
+        @foreach (var order in Model.Orders)
+        {
+            Model.Hotels.TryGetValue(order.HotelId, out var hotel);
+            var group = order.City + "|" + order.CheckIn.ToString("yyyyMMdd");
+            if (group != lastGroup) { lastGroup = group; <div class="trip-group"><h2>@order.City</h2><small>@ThaiDates.Long(order.CheckIn)</small></div> }
+            <article class="trip-card">
+                <header><span>หมายเลขการจอง <strong class="booking-ref">LG@(order.Id.ToString("D6"))</strong></span><span class="pill @(order.Status is "Cancelled" or "NoShow" ? "cancelled" : order.Status == "Pending" ? "pending" : "")">@BookingStatus.Label(order.Status)</span></header>
+                <div class="trip-body">
+                    <div class="trip-photo">@if (hotel is not null) { <partial name="_HotelPhoto" model="hotel" /> } else { <div class="booking-art" aria-hidden="true"></div> }</div>
+                    <div class="trip-info"><h3>@order.HotelName</h3><p>@order.RoomName · @order.Rooms ห้อง · @order.Guests คน</p>
+                        <dl class="trip-dates"><div><dt>เช็กอิน</dt><dd>@ThaiDates.Short(order.CheckIn)</dd></div><span aria-hidden="true">•</span><div><dt>เช็กเอาต์</dt><dd>@ThaiDates.Short(order.CheckOut)</dd></div></dl></div>
+                    <strong class="trip-total">฿@order.Total.ToString("N2")</strong>
+                </div>
+                <footer>@if (order.Status == "Completed") { if (Model.ReviewedOrderIds.Contains(order.Id)) { if (hotel is not null) { <a class="stay-button secondary" asp-action="Details" asp-route-id="@order.HotelId" asp-fragment="reviews">รีวิวแล้ว · ดูรีวิว</a> } else { <span>รีวิวแล้ว</span> } } else { <a class="stay-button secondary" asp-action="Review" asp-route-id="@order.Id">เขียนรีวิวที่พัก</a> } }@if (Model.Tab != BookingTabs.Upcoming && hotel is not null) { <a class="stay-button secondary" asp-action="Details" asp-route-id="@order.HotelId">จองอีกครั้ง</a> }<a class="stay-button" asp-action="Order" asp-route-id="@order.Id">ดูรายละเอียดการจอง</a></footer>
+            </article>
+        }
+        </div>
+    }
+</section>

@@ -1,0 +1,19 @@
+@model FinanceReport
+@inject Nontiwat_7362_L002.Services.TodayService TodayPanel
+@{Layout="_StayLayout";ViewData["Title"]="AC · รายงานบัญชี";var st=Model.Status;}
+<section class="stay-container commerce-page"><partial name="_RoleNavigation" /><h1>เงินของลูกค้าอยู่ตรงไหน</h1><p class="lead-note">ติดตามเงินตั้งแต่ลูกค้าเติมเครดิต, Lodgo พักเงินไว้, โรงแรมให้บริการ จนถึง Lodgo โอนให้โรงแรม · เครดิตจำลองเท่านั้น</p>
+@await Html.PartialAsync("_TodayPanel", await TodayPanel.ForAsync(User))
+
+<partial name="_ACTabs" />
+<h2>สถานะเงินจากการจองตอนนี้ · ทุกรายการ</h2>
+<div class="role-metrics">
+<div class="surface"><span>1. เงินพักไว้ · รอโรงแรมยืนยัน (@st.HeldCount รายการ)</span><strong>฿@st.Held.ToString("N2")</strong><small class="muted">ยังคืนลูกค้าได้ทั้งหมด ไม่ใช่รายได้</small></div>
+<div class="surface"><span>2. รายได้รอรับรู้ · ยืนยันแล้ว/กำลังพัก (@st.DeferredCount รายการ)</span><strong>฿@st.Deferred.ToString("N2")</strong><small class="muted">ยังยกเลิกได้ก่อนวันเช็กอิน</small></div>
+<div class="surface"><span>3. รายได้รับรู้แล้ว · เข้าพักเสร็จ/ลูกค้าไม่มา (@st.EarnedCount รายการ)</span><strong>฿@st.Earned.ToString("N2")</strong><small class="muted">คืนไม่ได้แล้ว</small></div>
+<div class="surface"><span>ส่วนของ Lodgo (ค่าคอมมิชชั่น ตามอัตราที่ล็อกไว้ในแต่ละการจอง (ค่าเริ่มต้น @FinanceRules.CommissionPercent.ToString("0.##")%))</span><strong>฿@st.Commission.ToString("N2")</strong><small class="muted">ที่เหลือ ฿@((st.Earned-st.Commission).ToString("N2")) เป็นของโรงแรม · <a asp-action="Settlement">ดูยอดที่ต้องโอน</a></small></div>
+</div>
+<h2>เงินเข้า–ออกกระเป๋าลูกค้าตามช่วงวันที่</h2>
+<form method="get" class="role-filter"><label>ตั้งแต่<input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" required /></label><label>ถึง<input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" required /></label><button class="stay-button" type="submit">ดูรายงาน</button><a class="stay-button secondary download-button" href="/AC/Export?kind=ledger&amp;from=@Model.From.ToString("yyyy-MM-dd")&amp;to=@Model.To.ToString("yyyy-MM-dd")"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> ดาวน์โหลด CSV ช่วงนี้</a></form>
+<div class="role-metrics"><div class="surface"><span>ยอดเติมเครดิต · ไม่ใช่รายได้</span><strong>฿@Model.TopUps.ToString("N2")</strong></div><div class="surface"><span>ลูกค้าจ่ายค่าจอง</span><strong>฿@Model.Payments.ToString("N2")</strong></div><div class="surface"><span>คืนเครดิตให้ลูกค้า</span><strong>฿@Model.Refunds.ToString("N2")</strong></div><div class="surface"><span>ค่าจองสุทธิในช่วงนี้</span><strong>฿@((Model.Payments-Model.Refunds).ToString("N2"))</strong></div></div>
+<p class="simulation-box">ตัวเลขตามช่วงวันที่นับจากเวลาที่เงินเข้า–ออกกระเป๋า ส่วนสถานะด้านบนนับจากสถานะใบจองปัจจุบัน ยังไม่มีการบันทึกค่าใช้จ่ายดำเนินงาน จึงไม่ใช่งบกำไรขาดทุน</p>
+<div class="surface table-scroll"><p>@Model.Count รายการในช่วงที่เลือก · แสดงรายละเอียดล่าสุดสูงสุด 200 รายการ ยอดสรุปรวมทุกรายการในช่วง</p><table class="ledger-table"><thead><tr><th>วันเวลา</th><th>บัญชี</th><th>รายการ</th><th>เครดิตเข้า/ออกจากกระเป๋า</th></tr></thead><tbody>@foreach(var row in Model.Entries){<tr><td>@row.Entry.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</td><td>@row.Email</td><td>@row.Entry.Description</td><td class="@(row.Entry.Amount>0?"positive":"negative")">@row.Entry.Amount.ToString("N2")</td></tr>}@if(Model.Count==0){<tr><td colspan="4">ไม่มีรายการในช่วงนี้</td></tr>}</tbody></table></div></section>

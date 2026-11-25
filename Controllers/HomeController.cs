@@ -1,57 +1,89 @@
 using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
-using Nuttawat_7324_L002.ViewModels;
-using Nuttawat_7324_L002.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nuttawat_7324_L002.Models;
+using Nontiwat_7362_L002.Models;
 
-namespace Nuttawat_7324_L002.Controllers;
+namespace Nontiwat_7362_L002.Controllers;
 
-public class HomeController(Csi402dbContext db) : Controller
+public class HomeController : Controller
 {
-    [Authorize(Policy = ShopAccess.Storefront)]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var items = await HomeCatalogSelection.Items(db.Catalog.AsNoTracking(), db.HomePins.AsNoTracking()).ToListAsync();
-        return View(new HomePageViewModel { Shelves = HomeCatalogSelection.Shelves(items) });
+        return RedirectToAction("Index", "Account");
     }
 
-    [Authorize(Policy = ShopAccess.CustomBikes)]
-    public async Task<IActionResult> CustomBike() => View(await CatalogPageAsync("Bike"));
-
-    [Authorize(Policy = ShopAccess.Products)]
-    public async Task<IActionResult> Product() => View(await CatalogPageAsync("Product"));
-
-    [Authorize(Policy = ShopAccess.Storefront)]
-    public async Task<IActionResult> Promotion() => View(await CatalogPageAsync("Package"));
-
-    private async Task<CatalogPage> CatalogPageAsync(string kind)
+    // "Lodgo ทำอะไรได้บ้าง": the whole flow with every demo account and its password, so only Owner and Admin may open it.
+    [HttpGet, Authorize(Policy = Nontiwat_7362_L002.Security.RolePolicies.Owner)]
+    public IActionResult Guide([FromServices] IConfiguration config)
     {
-        var catalog = db.Catalog.AsNoTracking();
-        var items = await catalog.Where(item => item.Active && item.Kind == kind).OrderBy(item => item.Id).ToListAsync();
-        var stock = kind is "Product" or "Package"
-            ? await (from sku in db.Stock.AsNoTracking()
-                     join item in catalog on sku.CatalogItemId equals item.Id
-                     where item.Active && item.Kind == kind
-                     orderby sku.Id
-                     select sku).ToListAsync()
-            : new List<StockItem>();
-        var coupons = kind == "Package" ? await db.Coupons.AsNoTracking().Where(x => x.Active).OrderBy(x => x.Code).ToListAsync() : new List<Coupon>();
-        var codes = kind == "Package" ? await db.PackageCodes.ToDictionaryAsync(x => x.CatalogItemId, x => x.Code) : new Dictionary<int, string>();
-        return new CatalogPage(items, stock.ToLookup(x => x.CatalogItemId), coupons, codes)
-        {
-            BuildableBikeIds = kind == "Bike"
-                ? (await db.BikePartSlots.Select(slot => slot.BikeId).Distinct().ToListAsync()).ToHashSet()
-                : []
-        };
+        ViewData["ShowPasswords"] = config.GetValue("Demo:ShowAccounts", true);
+        return View();
     }
 
-    [Authorize(Policy = ShopAccess.Storefront)]
     public IActionResult Privacy()
     {
         return View();
     }
+
+    public IActionResult Lab2()
+    {
+        string Name , Lastname ;
+        Name = "Nontiwat" ;
+        Lastname = "Muensai" ;
+        ViewBag.Stdname = Name+Lastname;
+        
+        string Sec = "002";
+        ViewBag.Stdsec = Sec;
+
+        char Grade;
+        Grade = 'A';
+        ViewBag.Stdgrade = Grade;
+
+        string Language = "Javascript";
+        ViewBag.Stdlanguage = Language;
+
+        int A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,Sum;
+        
+        A1 = 0;
+        A2 = 0;
+        A3 = 9;
+        A4 = 10;
+        A5 = 00;
+        A6 = 10;
+        A7 = 10;
+        A8 = 10;
+        A9 = 10;
+        A10 = 10;
+        Sum = A1 + A2 + A3 + A4 + A5 + A6 + A7 + A8 + A9 + A10;
+        
+
+        if (Sum >= 80 )
+        {
+            ViewBag.result = "A";
+        }
+        else if (Sum >= 76)
+        {
+            ViewBag.result = "B+";
+        }
+        else if (Sum >= 70)
+        {
+            ViewBag.result = "B";
+        }
+        else if (Sum >= 66)
+        {
+            ViewBag.result = "C+";
+        }
+        else if (Sum >= 56)
+        {
+            ViewBag.result = "C";
+        }
+          else if (Sum >= 49)
+        {
+            ViewBag.result = "F";
+        }
+
+        return View();
+     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

@@ -1,0 +1,30 @@
+@model string
+@using System.Security.Claims
+@using Nontiwat_7362_L002.Security
+@inject Nontiwat_7362_L002.Services.WishlistService Wishlist
+@{
+    // One query per page: the liked ids are cached for the rest of the request.
+    var here = Context.Request.Path + Context.Request.QueryString;
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var canLike = signedIn && (User.IsInRole(AppRoles.Customer) || User.IsInRole(AppRoles.Admin));
+    HashSet<string> liked = new();
+    if (canLike) {
+        if (Context.Items["wishlist-ids"] is HashSet<string> cached) { liked = cached; } else {
+            liked = await Wishlist.IdsAsync(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!));
+            Context.Items["wishlist-ids"] = liked;
+        }
+    }
+    var on = liked.Contains(Model);
+}
+@if (!signedIn) {
+    <a class="wishlist-heart wishlist-login" href="/Account/Login?returnUrl=@Uri.EscapeDataString(here)" aria-label="เข้าสู่ระบบเพื่อเก็บไว้ในรายการโปรด" title="เข้าสู่ระบบเพื่อเก็บไว้ในรายการโปรด">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    </a>
+} else if (canLike) {
+    <form class="wishlist-form" method="post" asp-controller="Wishlist" asp-action="Toggle">
+        <input type="hidden" name="hotelId" value="@Model" /><input type="hidden" name="returnUrl" value="@here" />
+        <button type="submit" class="wishlist-heart" aria-pressed="@(on ? "true" : "false")" data-label-on="เอาออกจากรายการโปรด" data-label-off="เพิ่มในรายการโปรด" aria-label="@(on ? "เอาออกจากรายการโปรด" : "เพิ่มในรายการโปรด")" title="@(on ? "เอาออกจากรายการโปรด" : "เพิ่มในรายการโปรด")">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </button>
+    </form>
+}

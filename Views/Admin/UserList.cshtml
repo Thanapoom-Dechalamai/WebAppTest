@@ -1,0 +1,94 @@
+@model UserListViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "รายชื่อบัญชีผู้ใช้";
+    var ownId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+<section class="user-directory w-100" aria-labelledby="page-title">
+    <div class="list-heading d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div><h1 id="page-title">รายชื่อผู้ใช้</h1><p class="list-intro small mb-0">รายชื่อสมาชิกและสิทธิ์การใช้งาน</p></div>
+        <a asp-controller="Admin" asp-action="AddUser" class="btn btn-light">+ เพิ่มผู้ใช้</a>
+    </div>
+    <div class="list-content"><p><a asp-action="Index">แผงควบคุม Admin</a></p>
+        @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+        @if (TempData["Error"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+        @if (TempData["TempPassword"] is string tempPassword) {
+            <div class="alert alert-warning temp-password" role="status">
+                <strong>รหัสผ่านชั่วคราวของ @TempData["TempPasswordFor"]</strong>
+                <code class="temp-password-code">@tempPassword</code>
+                <span class="small">แสดงครั้งเดียวเท่านั้น ส่งให้เจ้าของบัญชีทางช่องทางที่ปลอดภัย และให้เปลี่ยนรหัสผ่านที่หน้าโปรไฟล์หลังเข้าสู่ระบบ</span>
+            </div>
+        }
+        <form asp-action="UserList" method="get" class="user-directory-filters" role="search">
+            <label for="search" class="visually-hidden">ค้นหาชื่อหรืออีเมล</label>
+            <input id="search" name="search" value="@Model.Search" class="form-control" placeholder="ค้นหาชื่อหรืออีเมล" maxlength="100" />
+            <label class="visually-hidden" for="user-role-filter">กรองตามบทบาท</label>
+            <select id="user-role-filter" name="role" class="form-select"><option value="">ทุกบทบาท</option>
+                @foreach (var role in AppRoles.All) { <option value="@role" selected="@(role == Model.RoleFilter)">@AppRoles.Label(role)</option> }
+            </select>
+            <label class="visually-hidden" for="user-status-filter">กรองตามสถานะ</label>
+            <select id="user-status-filter" name="status" class="form-select"><option value="">ทุกสถานะ</option>
+                <option value="active" selected="@(Model.StatusFilter == "active")">ใช้งานได้</option>
+                <option value="suspended" selected="@(Model.StatusFilter == "suspended")">ถูกระงับ</option>
+            </select>
+            <button type="submit" class="btn btn-primary">ค้นหา</button>
+            @if (!string.IsNullOrWhiteSpace(Model.Search)) { <a asp-action="UserList" class="btn btn-outline-primary">ทั้งหมด</a> }
+        </form>
+        <div class="table-toolbar"><span class="table-label">รายชื่อสมาชิก</span><span class="table-hint">@Model.Total บัญชี</span></div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle user-table mb-0">
+                <caption class="visually-hidden">รายชื่อสมาชิก</caption>
+                <thead><tr><th scope="col">ผู้ใช้</th><th scope="col">อีเมล</th><th scope="col">บทบาท</th><th scope="col">สถานะ</th><th scope="col">เข้าสู่ระบบล่าสุด</th><th scope="col">จัดการ</th></tr></thead>
+                <tbody>
+                    @if (Model.Users.Count == 0)
+                    {
+                        <tr><td colspan="6" class="text-center text-secondary py-5">@(string.IsNullOrWhiteSpace(Model.Search) ? "ยังไม่มีสมาชิก" : "ไม่พบสมาชิกที่ค้นหา")</td></tr>
+                    }
+                    @foreach (var member in Model.Users)
+                    {
+                        <tr>
+                            <td><div class="directory-person"><span class="directory-initial" aria-hidden="true">@member.Initials</span>
+                                <div><strong>@member.FirstName @member.LastName</strong><br /><small>#@member.Id</small></div></div></td><td>@member.Email</td>
+                            <td><span class="badge role-badge">@AppRoles.Label(member.Role)</span>@if (member.Role == AppRoles.HotelOwner) { if (member.HotelCount == 0) { <br /><small class="no-hotel-note">ยังไม่ได้ผูกโรงแรม <a asp-action="EditUser" asp-route-id="@member.Id.ToString()">เลือกโรงแรมที่ดูแล</a></small> } else { <br /><small class="text-secondary">ดูแล @member.HotelCount โรงแรม</small> } }</td>
+                            <td><span class="directory-status @(member.IsSuspended ? "directory-suspended" : "directory-active")">@(member.IsSuspended ? "ถูกระงับ" : "ใช้งานได้")</span>
+                                @if (member.IsSuspended && !string.IsNullOrWhiteSpace(member.SuspendedReason)) { <br /><small>@member.SuspendedReason</small> }</td>
+                            <td>@(member.LastLoginUtc?.AddHours(7).ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</td>
+                            <td>
+                                <details class="directory-actions">
+                                    <summary class="btn btn-outline-secondary" aria-label="จัดการ @member.FirstName @member.LastName">จัดการ</summary>
+                                    <div class="directory-menu">
+                                    <a asp-action="EditUser" asp-route-id="@member.Id" class="btn btn-outline-primary text-nowrap">แก้ไข</a>
+                                    @if (member.Id.ToString() != ownId)
+                                    {
+                                        <a asp-action="DeleteUser" asp-route-id="@member.Id" class="btn btn-outline-danger text-nowrap">ลบ</a>
+                                        @if (member.IsSuspended) {
+                                            <form asp-action="Unsuspend" method="post"><input type="hidden" name="id" value="@member.Id" /><button type="submit" class="btn btn-outline-success text-nowrap">ยกเลิกระงับ</button></form>
+                                        } else {
+                                            <details class="suspend-box"><summary class="btn btn-outline-warning text-nowrap">ระงับ</summary>
+                                                <form asp-action="Suspend" method="post" class="suspend-form"><input type="hidden" name="id" value="@member.Id" />
+                                                    <label for="reason-@member.Id" class="form-label small">เหตุผลที่ระงับ</label>
+                                                    <input id="reason-@member.Id" name="reason" class="form-control form-control-sm" maxlength="200" required />
+                                                    <button type="submit" class="btn btn-warning btn-sm mt-2">ยืนยันระงับบัญชี</button>
+                                                </form>
+                                            </details>
+                                        }
+                                    }
+                                    <form asp-action="ResetPassword" method="post" onsubmit="return confirm('ตั้งรหัสผ่านใหม่แบบสุ่มให้บัญชีนี้? รหัสเดิมจะใช้ไม่ได้ทันที')"><input type="hidden" name="id" value="@member.Id" /><button type="submit" class="btn btn-outline-secondary text-nowrap">รีเซ็ตรหัสผ่าน</button></form>
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.PageCount > 1) {
+            <nav class="directory-pages" aria-label="หน้ารายชื่อผู้ใช้">
+                @if (Model.Page > 1) { <a asp-action="UserList" asp-route-search="@Model.Search" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter" asp-route-page="@(Model.Page - 1)">ก่อนหน้า</a> }
+                <span aria-current="page">หน้า @Model.Page จาก @Model.PageCount</span>
+                @if (Model.Page < Model.PageCount) { <a asp-action="UserList" asp-route-search="@Model.Search" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter" asp-route-page="@(Model.Page + 1)">ถัดไป</a> }
+            </nav>
+        }
+    </div>
+</section>
+

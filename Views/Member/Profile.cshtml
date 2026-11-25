@@ -1,0 +1,32 @@
+@model ProfileForm
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ข้อมูลบัญชี"; }
+<section class="stay-container commerce-page">
+    <h1>ข้อมูลบัญชี</h1><p class="lead-note">จัดการชื่อและรูปโปรไฟล์ของคุณได้ที่นี่</p>
+    <partial name="_CommerceMessage" />
+    <div class="account-columns">
+        <aside class="surface profile-summary">
+            @if (Model.AvatarFile is not null) { <img class="profile-photo" src="@Url.Action("Avatar", "Member", new { id = Model.AvatarFile })" alt="รูปโปรไฟล์ของคุณ" /> }
+            else { <div class="profile-photo avatar-placeholder">@Model.FirstName.FirstOrDefault()</div> }
+            <h2>@Model.FirstName @Model.LastName</h2><p>@Model.Email</p><p class="muted">บทบาท @AppRoles.Label(Model.Role)</p>
+            <a asp-action="Wallet">เครดิตและประวัติการเงิน</a><a asp-controller="Stays" asp-action="Bookings">รายการจองของฉัน</a>
+        </aside>
+        <form class="surface form-stack" method="post" asp-action="Profile" enctype="multipart/form-data">
+            <h2>แก้ไขข้อมูลส่วนตัว</h2><div asp-validation-summary="All" class="validation-errors" role="alert"></div>
+            <div class="form-pair"><label>ชื่อ<input asp-for="FirstName" maxlength="80" autocomplete="given-name" required /></label><label>นามสกุล<input asp-for="LastName" maxlength="80" autocomplete="family-name" required /></label></div>
+            <label>อีเมล<input value="@Model.Email" readonly aria-readonly="true" /></label>
+            <label>รูปโปรไฟล์<input asp-for="Photo" type="file" accept="image/jpeg,image/png" /></label>
+            <p class="muted">รองรับ JPG หรือ PNG ไม่เกิน 2 MB · เลือกรูปแล้วกดบันทึก</p>
+            <button class="stay-button" type="submit">บันทึกข้อมูลบัญชี</button>
+        </form>
+    </div>
+    <form id="change-password" class="surface form-stack password-form" method="post" asp-action="ChangePassword">
+        <h2>เปลี่ยนรหัสผ่าน</h2>
+        <p class="muted">ถ้าได้รับรหัสผ่านชั่วคราวจากผู้ดูแลระบบ ให้เปลี่ยนเป็นรหัสของคุณเองที่นี่</p>
+        <label for="Password_Current">รหัสผ่านปัจจุบัน<input id="Password_Current" name="Password.Current" type="password" autocomplete="current-password" required /></label>
+        <div class="form-pair">
+            <label for="Password_Next">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)<input id="Password_Next" name="Password.Next" type="password" minlength="6" maxlength="100" autocomplete="new-password" required /></label>
+            <label for="Password_Confirm">ยืนยันรหัสผ่านใหม่<input id="Password_Confirm" name="Password.Confirm" type="password" minlength="6" maxlength="100" autocomplete="new-password" required /></label>
+        </div>
+        <button class="stay-button" type="submit">เปลี่ยนรหัสผ่าน</button>
+    </form>
+</section>

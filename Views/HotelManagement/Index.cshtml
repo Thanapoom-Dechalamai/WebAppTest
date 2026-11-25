@@ -1,0 +1,22 @@
+@model HotelManagementPage
+@{Layout="_StayLayout";ViewData["Title"]="ทีมพนักงานโรงแรม";}
+<section class="stay-container commerce-page"><partial name="_RoleNavigation" /><h1>ทีมพนักงานของแต่ละโรงแรม</h1>
+<p class="lead-note">พนักงานโรงแรมจะเห็นและจัดการได้เฉพาะการจองของโรงแรมที่อยู่ในทีมเท่านั้น หนึ่งโรงแรมมีพนักงานได้หลายคน และพนักงานหนึ่งคนอยู่ได้หลายโรงแรม โรงแรมที่ยังไม่มีทีม คำขอจองจะไม่มีใครรับ Lodgo support จะเห็นเป็นรายการค้าง</p>
+<partial name="_CommerceMessage" />
+<div class="role-toolbar hotel-management-actions" role="group" aria-label="จัดการโรงแรม">
+    <a class="stay-button" asp-controller="HotelCatalog" asp-action="Index">จัดการข้อมูลโรงแรม</a>
+    <a class="stay-button secondary" asp-controller="Admin" asp-action="AddUser">เพิ่มบัญชีพนักงานโรงแรม</a>
+    <a class="stay-button secondary" asp-controller="StayEnvironment" asp-action="Edit">จัดการบรรยากาศ วิว และสระว่ายน้ำ</a>
+</div>
+@if(Model.Owners.Count==0){<p class="simulation-box">ยังไม่มีบัญชีบทบาทพนักงานโรงแรม ให้เพิ่มบัญชีก่อน แล้วจึงเพิ่มเข้าทีมโรงแรม</p>}
+<div class="surface table-scroll history-panel"><table class="ledger-table"><thead><tr><th>โรงแรม</th><th>จังหวัด</th><th>ทีมพนักงานโรงแรม</th><th>เพิ่มเข้าทีม</th><th>ค่าธรรมเนียม Lodgo</th></tr></thead><tbody>
+@foreach(var h in Model.Hotels){
+    var team=Model.Assignments.Where(x=>x.HotelId==h.Id).Select(x=>x.OwnerUserId).ToList();
+    var members=Model.Owners.Where(o=>team.Contains(o.Id)).ToList();
+    var candidates=Model.Owners.Where(o=>!team.Contains(o.Id)).ToList();
+    var rate=Model.Rates.GetValueOrDefault(h.Id, FinanceRules.CommissionPercent);
+    <tr><td>@h.Name</td><td>@h.City</td>
+    <td>@if(members.Count==0){<small class="muted">ยังไม่มีทีม · ไม่มีใครรับคำขอจอง</small>}
+        @foreach(var m in members){<form asp-action="Remove" method="post" class="role-inline"><input name="HotelId" value="@h.Id" type="hidden" /><input name="OwnerUserId" value="@m.Id" type="hidden" /><span>@m.FirstName @m.LastName · <small>@m.Email</small></span><button class="stay-button secondary small-button" type="submit">นำออก</button></form>}</td>
+    <td>@if(candidates.Count>0){<form asp-action="Assign" method="post" class="role-inline"><input name="HotelId" value="@h.Id" type="hidden" /><label class="visually-hidden" for="staff-@h.Id">เพิ่มพนักงานให้ @h.Name</label><select id="staff-@h.Id" name="OwnerUserId" required><option value="">เลือกพนักงาน</option>@foreach(var c in candidates){<option value="@c.Id">@c.FirstName @c.LastName · @c.Email</option>}</select><button class="stay-button secondary" type="submit">เพิ่ม</button></form>}else if(Model.Owners.Count>0){<small>พนักงานทุกคนอยู่ในทีมนี้แล้ว</small>}</td><td><form asp-action="Rate" method="post" class="role-inline rate-form"><input name="HotelId" value="@h.Id" type="hidden" /><label for="rate-@h.Id">ค่าธรรมเนียมของ @h.Name (%)</label><input id="rate-@h.Id" name="Percent" type="number" min="0" max="30" step="0.5" value="@rate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" /><button class="stay-button secondary small-button" type="submit">บันทึก<span class="visually-hidden"> ค่าธรรมเนียม @h.Name</span></button><small class="muted">โรงแรมได้รับ @((100-rate).ToString("0.##"))%</small></form></td></tr>
+}</tbody></table></div></section>

@@ -1,0 +1,192 @@
+[
+  {
+    "Id": "th-stay-001",
+    "Category": "city",
+    "ViewType": "city",
+    "HasPool": true,
+    "SourceUrl": "https://www.amari.com/donmuang",
+    "PhotoUrl": "/images/hotels/th-stay-001.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://media.onyx-hospitality.com/-/media/project/amari/common/property/donmuang/hotel_4share.jpg?w=1200&rev=742c8a0089d5451688bde88a5be8627a&hash=04199FA021852FDADAE464F898879F4F",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-009",
+    "Category": "garden",
+    "ViewType": "garden",
+    "HasPool": true,
+    "SourceUrl": "https://maneechan.com/",
+    "PhotoUrl": "/images/hotels/th-stay-009.webp",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://maneechan.com/wp-content/uploads/2025/07/banner-home-160725-1.webp",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-010",
+    "Category": "city",
+    "ViewType": "city",
+    "HasPool": true,
+    "SourceUrl": "https://www.uhotelsresorts.com/unimmanchiangmai",
+    "PhotoUrl": "/images/hotels/th-stay-010.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://image-tc.galaxy.tf/wijpeg-a67xkwn8wkoh61zne8zcm4h2b/two-bedroon-suite-3_standard.jpg?crop=53%2C0%2C845%2C634",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-012",
+    "Category": "city",
+    "ViewType": "sea",
+    "HasPool": true,
+    "SourceUrl": "https://grandecentrepointpattaya.com/",
+    "PhotoUrl": "/images/hotels/th-stay-012.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://grandecentrepointpattaya.com/upload/rooms/superior-seaview-800px.jpg?v=76",
+    "Description": "ที่พักในเมืองพัทยา มีวิวทะเลจากบางประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-016",
+    "Category": "river",
+    "ViewType": "river",
+    "HasPool": true,
+    "SourceUrl": "https://www.uhotelsresorts.com/uinchantreekanchanaburi",
+    "PhotoUrl": "/images/hotels/th-stay-016.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://image-tc.galaxy.tf/wijpeg-536xpi0ptne5yekjlh8hnlzkj/sunset-at-u-inchantree.jpg?width=1920",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-018",
+    "Category": "beach",
+    "ViewType": "mountain",
+    "HasPool": true,
+    "SourceUrl": "https://panankrabiresort.com/",
+    "PhotoUrl": "/images/hotels/th-stay-018.webp",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://panankrabiresort.com/wp-content/uploads/2026/04/Deluxe-Cliff-View-Room-01_-768x511.webp",
+    "Description": "ที่พักย่านอ่าวนาง ใกล้ชายหาด มีวิวภูเขาจากบางพื้นที่"
+  },
+  {
+    "Id": "th-stay-023",
+    "Category": "garden",
+    "ViewType": "garden",
+    "HasPool": true,
+    "SourceUrl": "https://www.paivillage.com/",
+    "PhotoUrl": "/images/hotels/th-stay-023.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.paivillage.com/images/home/main-slide-001.jpg",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-026",
+    "Category": "forest",
+    "ViewType": "forest",
+    "HasPool": true,
+    "SourceUrl": "https://www.royalhillsresort.com/en/",
+    "PhotoUrl": "/images/hotels/th-stay-026.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.royalhillsresort.com/img/home/g1.jpg",
+    "Description": "รีสอร์ตในบริเวณแนวอุทยานแห่งชาติเขาใหญ่ มีพื้นที่ธรรมชาติและสระว่ายน้ำ"
+  },
+  {
+    "Id": "th-stay-032",
+    "Category": "garden",
+    "ViewType": "mountain",
+    "HasPool": true,
+    "SourceUrl": "https://www.nanseasons.com/",
+    "PhotoUrl": "/images/hotels/th-stay-032.png",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.nanseasons.com/assets/swimming-pool-tropical-garden.jpg",
+    "Description": "บังกะโลในพื้นที่สวนและทุ่งนา มีแนวภูเขาเป็นฉากหลัง"
+  },
+  {
+    "Id": "th-stay-042",
+    "Category": "mountain",
+    "ViewType": "mountain",
+    "HasPool": true,
+    "SourceUrl": "https://www.imperialhotels.com/find-us/our-hotels/the-imperial-phukaew-hill-resort",
+    "PhotoUrl": "/images/hotels/th-stay-042.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://image-tc.galaxy.tf/wijpeg-9g3z9qz507bnew4hk1b50ae8w/imgi-4-dsc2396.jpg",
+    "Description": "รีสอร์ตบนเขาค้อ จังหวัดเพชรบูรณ์ รายล้อมด้วยเนินเขา"
+  },
+  {
+    "Id": "th-stay-043",
+    "Category": "beach",
+    "ViewType": "sea",
+    "HasPool": true,
+    "SourceUrl": "https://www.so-sofitel-huahin.com/",
+    "PhotoUrl": "/images/hotels/th-stay-043.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://d2e5ushqwiltxm.cloudfront.net/wp-content/uploads/sites/73/2026/08/26023414/so-hua-hin-cover-1800x1013-1.jpg",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง",
+    "SeaDistanceKm": 0
+  },
+  {
+    "Id": "th-stay-048",
+    "Category": "beach",
+    "ViewType": "sea",
+    "HasPool": true,
+    "SourceUrl": "https://www.thenaiharn.com/",
+    "PhotoUrl": "/images/hotels/th-stay-048.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.thenaiharn.com/wp-content/uploads/2026/01/og-thenaiharn.jpg",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-061",
+    "Category": "beach",
+    "ViewType": "sea",
+    "HasPool": true,
+    "SourceUrl": "https://www.bundhayaresort.com/",
+    "PhotoUrl": "/images/hotels/th-stay-061.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.bundhayaresort.com/asset-template/images/images.jpg",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง",
+    "SeaDistanceKm": 0
+  },
+  {
+    "Id": "th-stay-065",
+    "Category": "garden",
+    "ViewType": "garden",
+    "HasPool": true,
+    "SourceUrl": "https://www.sriwilaisukhothai.com/",
+    "PhotoUrl": "/images/hotels/th-stay-065.webp",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.sriwilaisukhothai.com/images/hero/resort-aerial.webp",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-067",
+    "Category": "beach",
+    "ViewType": "sea",
+    "HasPool": true,
+    "SourceUrl": "https://www.samuiburi.com/",
+    "PhotoUrl": "/images/hotels/th-stay-067.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.samuiburi.com/images/slide-01.jpg",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง",
+    "SeaDistanceKm": 0
+  },
+  {
+    "Id": "th-stay-086",
+    "Category": "river",
+    "ViewType": "river",
+    "HasPool": true,
+    "SourceUrl": "https://reveriesiam.com/",
+    "PhotoUrl": "/images/hotels/th-stay-086.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://reveriesiam.com/wp-content/uploads/2021/07/S__4554758-scaled.jpg",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  },
+  {
+    "Id": "th-stay-099",
+    "Category": "river",
+    "ViewType": "river",
+    "HasPool": true,
+    "SourceUrl": "https://www.hoteldeladda.com/",
+    "PhotoUrl": "/images/hotels/th-stay-099.jpg",
+    "PhotoCredit": "ภาพจากเว็บไซต์ทางการของที่พัก",
+    "PhotoOriginal": "https://www.hoteldeladda.com/images/accommodation/Deluxe-Double/Deluxe-Double_13.jpg",
+    "Description": "ข้อมูลบรรยากาศและสระว่ายน้ำอ้างอิงจากเว็บไซต์ของที่พัก วิวแตกต่างกันตามประเภทห้อง"
+  }
+]

@@ -1,0 +1,103 @@
+@model SupportCaseView
+@using Nontiwat_7362_L002.Services
+@using Nontiwat_7362_L002.Services.Support
+@inject IThaiClock Clock
+@* The customer's chat (/Support/Case). Staff answer tickets on /Staff/Cases (Views/Staff/Cases.cshtml) since 2026-11-25. *@
+@{
+    var c = Model.Case;
+    var closed = c.Status == SupportStatus.Closed;
+    const string controller = "Support";
+    var now = Clock.UtcNow;
+    var openQuote = Model.Quotes.FirstOrDefault(q => QuoteRules.IsOpen(q, now));
+    string ThaiTime(DateTime utc) { var local = utc.AddHours(7); return ThaiDates.Short(local) + " " + local.ToString("HH:mm") + " น."; }
+}
+<div class="chat-workspace">
+    <nav class="surface chat-inbox" aria-label="การสนทนา">
+        <header><h2>แชต</h2><a class="text-link" href="/Support/New">แชตใหม่</a></header>
+        @foreach (var item in Model.Inbox) {
+            <a class="chat-inbox-item" asp-controller="@controller" asp-action="Case" asp-route-id="@item.Case.Id" aria-current="@(item.Case.Id == c.Id ? "page" : null)">
+                <strong>@item.Case.Subject</strong><small>@SupportTicketRules.Number(item.Case.Id) · @SupportStatus.Label(item.Case.Status)</small>
+            </a>
+        }
+    </nav>
+    <section class="surface chat-main" aria-labelledby="chat-title">
+        <header><h2 id="chat-title">@c.Subject</h2><div class="case-meta" data-status="@c.Status"><span class="case-ticket">@SupportTicketRules.Number(c.Id)</span> · <span data-chat-label>@SupportStatus.Label(c.Status)</span></div></header>
+        <div class="chat-messages" data-chat-feed="@Url.Action("Messages", controller, new { id = c.Id })" role="log" aria-live="polite">
+            <partial name="~/Views/Support/_Messages.cshtml" model="Model" />
+        </div>
+        @* Not inside the polled feed: refreshing the feed must never wipe a half-filled payment form. *@
+        @if (openQuote is not null && !closed) { var q = openQuote;
+            <section class="quote-card" aria-labelledby="quote-@q.Id">
+                <header><h3 id="quote-@q.Id">ใบเสนอราคา @QuoteRules.Number(q.Id)</h3><span class="quote-state" data-state="Open">@QuoteStatus.Label(QuoteStatus.Open)</span></header>
+                <dl class="quote-facts">
+                    <div><dt>ที่พัก</dt><dd>@q.HotelName · @q.RoomName</dd></div>
+                    <div><dt>วันที่</dt><dd>@ThaiDates.Long(q.CheckIn) – @ThaiDates.Long(q.CheckOut)</dd></div>
+                    <div><dt>ห้องและผู้เข้าพัก</dt><dd>@q.Rooms ห้อง · @q.Guests คน</dd></div>
+                    @if (q.SpecialRequest is not null) { <div><dt>คำขอพิเศษ</dt><dd>@q.SpecialRequest</dd></div> }
+                    <div><dt>ยอดก่อนลด</dt><dd>฿@q.Subtotal.ToString("N2")</dd></div>
+                    @if (q.Discount > 0) { <div><dt>ส่วนลด @q.PromotionCode</dt><dd>−฿@q.Discount.ToString("N2")</dd></div> }
+                    <div class="quote-total"><dt>ยอดชำระ</dt><dd>฿@q.Total.ToString("N2")</dd></div>
+                </dl>
+                <p class="quote-expiry">ยืนยันได้ถึง @ThaiTime(q.ExpiresAtUtc) ระบบจะตรวจห้องว่างอีกครั้งตอนที่คุณยืนยัน</p>
+                <form class="quote-accept" method="post" enctype="multipart/form-data" asp-controller="Support" asp-action="AcceptQuote">
+                    <input type="hidden" name="QuoteId" value="@q.Id" /><input type="hidden" name="CaseId" value="@c.Id" />
+                    <fieldset>
+                        <legend>วิธีชำระ</legend>
+                        <label class="quote-method"><input type="radio" name="PaymentMethod" value="Credit" checked /> เครดิต Lodgo (หักทันทีเมื่อยืนยัน)</label>
+                        <label class="quote-method"><input type="radio" name="PaymentMethod" value="Transfer" /> โอนเงิน (แนบสลิปหรือกรอกเลขที่รายการอย่างน้อยหนึ่งอย่าง)</label>
+                    </fieldset>
+                    <div class="quote-transfer">
+                        <label>เลขที่รายการโอน<input name="PaymentRef" maxlength="64" /></label>
+                        <label>สลิปโอนเงิน (JPG, PNG หรือ PDF ไม่เกิน 5 MB)<input name="Slip" type="file" accept="image/jpeg,image/png,application/pdf" /></label>
+                    </div>
+                    <button class="stay-button" type="submit">ยืนยันและชำระ ฿@q.Total.ToString("N2")</button>
+                </form>
+                <details class="quote-decline">
+                    <summary>ไม่รับใบเสนอนี้</summary>
+                    <form method="post" asp-controller="Support" asp-action="DeclineQuote">
+                        <input type="hidden" name="quoteId" value="@q.Id" /><input type="hidden" name="caseId" value="@c.Id" />
+                        <label>บอกเจ้าหน้าที่ว่าอยากเปลี่ยนอะไร (ไม่บังคับ)<textarea name="reason" rows="2" maxlength="@QuoteRules.MaxDeclineReason"></textarea></label>
+                        <button class="stay-button secondary" type="submit">ส่งว่าไม่รับใบนี้</button>
+                    </form>
+                </details>
+            </section>
+        }
+        @if (closed) {
+            <p class="chat-closed">เรื่องนี้ปิดแล้ว <a href="/Support/New">เริ่มแชตใหม่</a></p>
+        } else {
+            <form method="post" enctype="multipart/form-data" asp-controller="@controller" asp-action="Reply" asp-route-id=""
+                  class="chat-composer">
+                <input type="hidden" name="id" value="@c.Id" />
+                <label for="case-body">ข้อความ</label>
+                <textarea id="case-body" name="body" rows="2" maxlength="2000"></textarea>
+                <label class="chat-file">แนบ JPG, PNG หรือ PDF ไม่เกิน 5 MB
+                    <input type="file" name="attachment" accept="image/jpeg,image/png,application/pdf" />
+                </label>
+                <div class="role-inline">
+                    <button class="stay-button" type="submit">ส่งข้อความ</button>
+                    <button class="stay-button secondary" type="submit" formaction="@Url.Action("Close", controller, new { id = "" })" formnovalidate onclick="return confirm('ปิดเรื่องนี้?')">ปิดเรื่อง</button>
+                </div>
+            </form>
+        }
+    </section>
+    <aside class="surface chat-context" aria-label="ข้อมูลประกอบ">
+        <h2>ข้อมูลประกอบ</h2>
+        <p>@SupportTopic.Label(c.Topic)</p>
+        @if (Model.Order is SupportOrderInfo o) {
+            <p><strong>LG@(o.Id.ToString("D6")) · @o.HotelName</strong><br />@ThaiDates.Long(o.CheckIn) – @ThaiDates.Long(o.CheckOut)<br />@BookingStatus.Label(o.Status) · ฿@o.Total.ToString("N2")</p>
+            <a class="text-link" asp-controller="Stays" asp-action="Order" asp-route-id="@o.Id.ToString()">ดูการจอง</a>
+        } else if (c.HotelId is not null) {
+            <p>คำขอจองที่พัก<br />@c.CheckIn?.ToString("dd/MM/yyyy") – @c.CheckOut?.ToString("dd/MM/yyyy")</p>
+        }
+        @if (Model.Quotes.Count > 0) {
+            <h3>ใบเสนอราคา</h3>
+            <ul class="quote-list">
+                @foreach (var q in Model.Quotes) { var state = QuoteRules.StateOf(q, now);
+                    <li><strong>@QuoteRules.Number(q.Id)</strong> ฿@q.Total.ToString("N2") <span class="quote-state" data-state="@state">@QuoteStatus.Label(state)</span>
+                        @if (q.OrderId is int oid) { <a class="text-link" asp-controller="Stays" asp-action="Order" asp-route-id="@oid.ToString()">ดูการจอง</a> }</li>
+                }
+            </ul>
+        }
+    </aside>
+</div>
+<script src="~/js/support-chat.js" asp-append-version="true" defer></script>

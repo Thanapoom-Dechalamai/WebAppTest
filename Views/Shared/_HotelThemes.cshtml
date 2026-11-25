@@ -1,0 +1,6 @@
+@model HotelCardViewModel
+@if(Model.Themes.Count>0) {
+<div class="environment-facts">
+@foreach(var theme in Model.Themes) {<span class="environment-badge">@StayEnvironmentOptions.DiscoveryCategories.GetValueOrDefault(theme)</span>}
+</div>
+}

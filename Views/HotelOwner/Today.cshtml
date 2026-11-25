@@ -1,0 +1,64 @@
+@model Nontiwat_7362_L002.ViewModels.Roles.TodayGuestsPage
+@inject Nontiwat_7362_L002.Services.IThaiClock Clock
+@using Nontiwat_7362_L002.Services
+@{ Layout = "_StayLayout"; ViewData["Title"] = "แขกวันนี้"; var today = Clock.Today; var hotelId = Model.Hotel?.Id ?? ""; }
+<section class="stay-container commerce-page guests-today"><partial name="_RoleNavigation" />
+<h1>แขกวันนี้</h1>
+<p class="lead-note">หน้าเคาน์เตอร์ของวันนี้: เช็กอินแขกที่มาถึง เช็กเอาต์แขกที่ครบกำหนด และดูว่าใครพักอยู่ตอนนี้ · @ThaiDates.Long(today)</p>
+<partial name="_CommerceMessage" />
+<div class="guests-toolbar no-print">
+    <a class="back-link" asp-action="Index">กลับไปหน้างานการจอง</a>
+    @if (Model.Hotel is not null) { <button class="stay-button secondary" type="button" onclick="window.print()">พิมพ์รายชื่อ</button> }
+</div>
+@if (Model.Hotel is null) {
+    <div class="surface"><p>บัญชีนี้ยังไม่อยู่ในทีมโรงแรมใด ให้ Admin เพิ่มเข้าทีมก่อน</p></div>
+} else {
+    @if (Model.Hotels.Count > 1) {
+        <form method="get" asp-action="Today" class="surface calendar-picker no-print">
+            <label>โรงแรม<select name="hotelId" onchange="this.form.submit()">@foreach (var h in Model.Hotels) { <option value="@h.Id" selected="@(h.Id == Model.Hotel.Id)">@h.Name · @h.City</option> }</select></label>
+            <noscript><button class="stay-button" type="submit">เปลี่ยนโรงแรม</button></noscript>
+        </form>
+    }
+    <h2 class="print-only">@Model.Hotel.Name · แขกวันที่ @ThaiDates.Long(today)</h2>
+
+    <div class="guest-columns">
+        <section class="surface guest-list" aria-labelledby="arrivals-title">
+            <h2 id="arrivals-title">รอเช็กอิน <span class="count-chip">@Model.Board.Arrivals.Count</span></h2>
+            @if (Model.Board.Arrivals.Count == 0) { <p class="muted">ไม่มีแขกรอเช็กอิน</p> }
+            @foreach (var g in Model.Board.Arrivals) {
+                var o = g.Order; var late = o.CheckIn < today;
+                <article class="guest-row">
+                    <div><strong>@g.GuestName</strong> <small>LG@(o.Id.ToString("D6"))</small>
+                        <p>@o.RoomName × @o.Rooms · @o.Guests คน · @ThaiDates.Short(o.CheckIn) – @ThaiDates.Short(o.CheckOut)</p>
+                        @if (o.SpecialRequest is not null) { <p class="special-note"><strong>คำขอพิเศษ:</strong> @o.SpecialRequest</p> }
+                        @if (late) { <p class="guest-warn">มาช้ากว่าวันเข้าพัก</p> }
+                    </div>
+                    <div class="guest-actions no-print">
+                        @if (o.CheckOut > today) { <form asp-action="CheckIn" method="post"><input type="hidden" name="id" value="@o.Id" /><input type="hidden" name="returnTo" value="Today" /><input type="hidden" name="hotelId" value="@hotelId" /><button class="stay-button" type="submit">เช็กอิน</button></form> }
+                        <form asp-action="NoShow" method="post" onsubmit="return confirm('บันทึกว่าแขกไม่มาเข้าพัก? รายการจะปิดโดยไม่คืนเครดิต')"><input type="hidden" name="id" value="@o.Id" /><input type="hidden" name="returnTo" value="Today" /><input type="hidden" name="hotelId" value="@hotelId" /><button class="stay-button secondary" type="submit">ไม่มาเข้าพัก</button></form>
+                    </div>
+                </article>
+            }
+        </section>
+
+        <section class="surface guest-list" aria-labelledby="inhouse-title">
+            <h2 id="inhouse-title">กำลังเข้าพัก <span class="count-chip">@Model.Board.InHouse.Count</span></h2>
+            @if (Model.Board.InHouse.Count == 0) { <p class="muted">ตอนนี้ยังไม่มีแขกพักอยู่</p> }
+            @foreach (var g in Model.Board.InHouse) {
+                var o = g.Order; var due = o.CheckOut <= today;
+                <article class="@(due ? "guest-row is-due" : "guest-row")">
+                    <div><strong>@g.GuestName</strong> <small>LG@(o.Id.ToString("D6"))</small>
+                        <p>@o.RoomName × @o.Rooms · ออก @ThaiDates.Short(o.CheckOut)</p>
+                        @if (o.SpecialRequest is not null) { <p class="special-note"><strong>คำขอพิเศษ:</strong> @o.SpecialRequest</p> }
+                        @if (due) { <p class="guest-due">ครบกำหนดเช็กเอาต์วันนี้</p> }
+                    </div>
+                    <div class="guest-actions no-print">
+                        <form asp-action="CheckOut" method="post"><input type="hidden" name="id" value="@o.Id" /><input type="hidden" name="returnTo" value="Today" /><input type="hidden" name="hotelId" value="@hotelId" /><button class="@(due ? "stay-button" : "stay-button secondary")" type="submit">เช็กเอาต์</button></form>
+                    </div>
+                </article>
+            }
+        </section>
+    </div>
+    <p class="muted no-print">ครบกำหนดออกวันนี้ @Model.Board.DueOut.Count คน · แขกที่ออกก่อนกำหนดก็เช็กเอาต์ได้จากรายการ "กำลังเข้าพัก"</p>
+}
+</section>

@@ -1,0 +1,16 @@
+@model StaffDashboard
+@inject Nontiwat_7362_L002.Services.TodayService TodayPanel
+@inject Nontiwat_7362_L002.Services.SupportService SupportCases
+@using Nontiwat_7362_L002.Services
+@using Nontiwat_7362_L002.Controllers
+@{Layout="_StayLayout";ViewData["Title"]="Lodgo support · ติดตามการจอง";var staleBefore=DateTime.UtcNow-StaffController.FollowUpAfter;}
+<section class="stay-container commerce-page"><partial name="_RoleNavigation" /><h1>ติดตามการจองและช่วยเหลือลูกค้า</h1>
+<p class="lead-note">หน้าที่ของ Lodgo support: ค้นหาใบจองเมื่อลูกค้าสอบถาม และตามเรื่องคำขอที่พนักงานโรงแรมยังไม่ตอบเกิน 24 ชั่วโมง รายการที่โรงแรมยืนยันแล้วเป็นความรับผิดชอบของพนักงานโรงแรม · แสดงสูงสุด 200 รายการล่าสุด</p>
+@await Html.PartialAsync("_TodayPanel", await TodayPanel.ForAsync(User))
+<partial name="_CommerceMessage" />
+<p><a class="stay-button secondary" asp-action="Cases">Ticket ลูกค้า</a></p>
+<div class="role-metrics work-queue"><a class="surface @(Model.Status=="Stale"?"is-active":"")" asp-route-status="Stale"><span>คำขอค้างเกิน 24 ชม. · ต้องตามโรงแรม</span><strong>@Model.StaleCount</strong></a><a class="surface" href="/Staff/Cases?status=Open"><span>Ticket ลูกค้า · รอ support ตอบ</span><strong>@(await SupportCases.OpenCountAsync())</strong></a></div>
+<form method="get" class="role-filter"><label>ชื่อ / อีเมล / ที่พัก<input name="search" value="@Model.Search" maxlength="100" /></label><label>สถานะ<select name="status"><option value="">ทั้งหมด</option><option value="Stale" selected="@(Model.Status=="Stale")">ค้างเกิน 24 ชม.</option>@foreach(var s in BookingStatus.All){<option value="@s" selected="@(Model.Status==s)">@BookingStatus.Label(s)</option>}</select></label><button class="stay-button" type="submit">ค้นหา</button></form>
+<div class="surface table-scroll"><table class="ledger-table"><thead><tr><th>รายการ / ลูกค้า</th><th>ที่พัก / ผู้ดูแล</th><th>ยอด / สถานะ</th><th>ช่วยเหลือลูกค้า</th></tr></thead><tbody>
+@foreach(var row in Model.Orders){var o=row.Order;var stale=o.Status=="Pending" && (o.HotelSentAtUtc ?? o.CreatedAtUtc)<staleBefore;Model.HotelTeams.TryGetValue(o.HotelId,out var team);<tr><td>LG@(o.Id.ToString("D6"))<br />@row.CustomerName<br /><small>@row.Email</small></td><td>@o.HotelName<br />@o.CheckIn.ToString("dd/MM/yyyy") – @o.CheckOut.ToString("dd/MM/yyyy")<br /><small>ทีมโรงแรม: @(team ?? "ยังไม่มีทีม · แจ้ง Admin")</small></td><td>฿@o.Total.ToString("N2")<br />@BookingStatus.Label(o.Status)@if(stale){<br /><span class="pill pending">ค้างเกิน 24 ชม.</span>}</td><td>@if(o.Status=="Pending"){<form asp-action="Cancel" method="post" class="form-stack staff-cancel"><input type="hidden" name="Id" value="@o.Id" /><label>เหตุผลยกเลิกคำขอ<input name="Reason" maxlength="120" placeholder="เช่น โรงแรมไม่ตอบกลับ" required /></label><button class="stay-button secondary" type="submit">ยกเลิกคำขอและคืนเครดิต</button></form>}else{<span>ดูแลโดยพนักงานโรงแรม</span>}</td></tr>}
+@if(Model.Orders.Count==0){<tr><td colspan="4">ไม่พบรายการจอง</td></tr>}</tbody></table></div></section>

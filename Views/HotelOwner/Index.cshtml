@@ -1,0 +1,124 @@
+@model HotelOwnerPage
+@inject Nontiwat_7362_L002.Services.IThaiClock Clock
+@inject Nontiwat_7362_L002.Services.TodayService TodayPanel
+@using Nontiwat_7362_L002.Services
+@{Layout="_StayLayout";ViewData["Title"]="พนักงานโรงแรม";var today=Clock.Today;}
+<section class="stay-container commerce-page hd"><partial name="_RoleNavigation" />
+<h1>@(Model.IsAdmin?"การจองทุกโรงแรม (มุมมอง Admin)":"งานของโรงแรมที่คุณดูแล")</h1>
+<p class="lead-note">คุณเห็นเฉพาะการจองของโรงแรมที่อยู่ในทีมของคุณ ขั้นตอน: <strong>ตรวจห้องว่าง, ยืนยัน, เช็กอินวันเข้าพัก, เช็กเอาต์</strong> ถ้าห้องไม่ว่างให้ยกเลิกพร้อมเหตุผล ระบบคืนเครดิตและคืนสิทธิ์โค้ดให้ลูกค้า</p>
+<partial name="_CommerceMessage" />
+@if (Model.Hotels.Count == 0 && !User.IsInRole(AppRoles.Admin)) { <div class="simulation-box no-hotel-notice" role="status"><h2>ยังไม่ได้รับมอบหมายโรงแรม</h2><p>บัญชีนี้ยังไม่อยู่ในทีมของโรงแรมใด จึงยังไม่เห็นการจอง ส่งคำขอพร้อมหลักฐานว่าเป็นพนักงานของโรงแรม ให้ Admin หรือ Manager อนุมัติ</p><p><a class="stay-button" asp-action="Access">ขอสิทธิ์ดูแลโรงแรม</a></p></div> }
+@{
+    // Dashboard (2026-11-22, from the owner's reference): tabs, booking summary donut, the day strip, then the bookings table.
+    var hues = new[] { "#1565C0", "#00695C", "#5D4037", "#AD1457", "#5E35B1", "#1B5E20", "#9A3412", "#37474F" };   // each >= 4.5:1 with white initials
+    string Hue(string s) => hues[Math.Abs((s ?? "").Aggregate(0, (a, c) => a * 31 + c)) % hues.Length];
+    string Initial(string s) => string.IsNullOrWhiteSpace(s) ? "?" : s.Trim().Substring(0, 1).ToUpperInvariant();
+    string StatusChip(string s) => s switch { "Pending" => "hd-chip wait", "Confirmed" => "hd-chip ok", "CheckedIn" => "hd-chip now", "Completed" => "hd-chip done", _ => "hd-chip off" };
+    var sum = Model.Summary;
+    var weekStart = Model.Day.AddDays(-(((int)Model.Day.DayOfWeek + 6) % 7));
+    var thDays = new[] { "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส.", "อา." };
+    var c1 = sum.Pct(sum.Confirmed); var c2 = sum.Pct(sum.Pending); var c3 = Math.Max(0, 100 - c1 - c2);
+    if (sum.Total == 0) { c1 = 0; c2 = 0; c3 = 0; }
+}
+<nav class="hd-tabs" aria-label="งานของโรงแรม">
+    <a class="is-on" aria-current="page" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>ภาพรวม</a>
+    <a href="#bookings"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>การจอง</a>
+    <a asp-action="Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg>ห้องว่าง</a>
+    <a asp-action="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>แขกวันนี้</a>
+    <a asp-action="Reviews" asp-route-filter="unanswered"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>รีวิว</a>
+    <a href="#money"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>เงินของโรงแรม</a>
+    <a asp-controller="StayEnvironment" asp-action="Edit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/></svg>ข้อมูลที่พัก</a>
+    <a asp-action="Access"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>ขอสิทธิ์โรงแรมเพิ่ม</a>
+</nav>
+
+<div class="hd-row">
+    <section class="hd-card" aria-labelledby="hd-sum">
+        <div class="hd-card-head"><h2 id="hd-sum">สรุปการจอง</h2>
+            <form method="get" class="hd-range"><input type="hidden" name="status" value="@Model.Status" /><label class="visually-hidden" for="hd-range">ช่วงเวลา</label>
+                <select id="hd-range" name="range" onchange="this.form.submit()"><option value="week" selected="@(sum.Range=="week")">7 วันล่าสุด</option><option value="month" selected="@(sum.Range=="month")">เดือนนี้</option><option value="30" selected="@(sum.Range=="30")">30 วันล่าสุด</option></select>
+                <noscript><button class="stay-button secondary small-button" type="submit">ดู</button></noscript></form></div>
+        <div class="hd-summary">
+            <div class="hd-donut" role="img" aria-label="การจอง @(sum.RangeLabel) @sum.Total รายการ: ยืนยันแล้ว @sum.Confirmed รอยืนยัน @sum.Pending ยกเลิกหรือไม่มา @sum.Cancelled">
+                <svg viewBox="0 0 42 42" aria-hidden="true">
+                    <circle cx="21" cy="21" r="15.9" class="hd-ring" pathLength="100" />
+                    @if (c1 > 0) { <circle cx="21" cy="21" r="15.9" class="hd-seg s1" pathLength="100" stroke-dasharray="@c1 @(100 - c1)" stroke-dashoffset="0" /> }
+                    @if (c2 > 0) { <circle cx="21" cy="21" r="15.9" class="hd-seg s2" pathLength="100" stroke-dasharray="@c2 @(100 - c2)" stroke-dashoffset="@(-c1)" /> }
+                    @if (c3 > 0) { <circle cx="21" cy="21" r="15.9" class="hd-seg s3" pathLength="100" stroke-dasharray="@c3 @(100 - c3)" stroke-dashoffset="@(-(c1 + c2))" /> }
+                </svg>
+                <div class="hd-donut-center"><span>การจอง @(sum.RangeLabel)</span><strong>@sum.Total</strong></div>
+            </div>
+            <ul class="hd-legend">
+                <li><i class="s1" aria-hidden="true"></i><b>ยืนยันแล้ว</b><small>@sum.Confirmed · @c1%</small></li>
+                <li><i class="s2" aria-hidden="true"></i><b>รอยืนยัน</b><small>@sum.Pending · @c2%</small></li>
+                <li><i class="s3" aria-hidden="true"></i><b>ยกเลิก / ไม่มา</b><small>@sum.Cancelled · @c3%</small></li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="hd-card" aria-labelledby="hd-week">
+        <div class="hd-card-head"><h2 id="hd-week">@(Model.CalendarHotel?.Name ?? "สัปดาห์นี้")</h2>
+            @if (Model.Hotels.Count > 1) { <form method="get" class="hd-range"><label class="visually-hidden" for="hd-hotel">โรงแรม</label><select id="hd-hotel" name="hotelId" onchange="this.form.submit()">@foreach (var h in Model.Hotels) { <option value="@h.Id" selected="@(h.Id == Model.CalendarHotel?.Id)">@h.Name</option> }</select><noscript><button class="stay-button secondary small-button" type="submit">ดู</button></noscript></form> }</div>
+        <div class="hd-week-nav"><a asp-route-day="@weekStart.AddDays(-7).ToString("yyyy-MM-dd")" asp-route-hotelId="@(Model.CalendarHotel?.Id)" aria-label="สัปดาห์ก่อน"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+            <span>@ThaiDates.Short(weekStart) – @ThaiDates.Short(weekStart.AddDays(6))</span>
+            <a asp-route-day="@weekStart.AddDays(7).ToString("yyyy-MM-dd")" asp-route-hotelId="@(Model.CalendarHotel?.Id)" aria-label="สัปดาห์ถัดไป"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></div>
+        <ol class="hd-days">
+            @for (var i = 0; i < 7; i++) { var d = weekStart.AddDays(i);
+                <li><a class="@(d == Model.Day ? "is-on" : "") @(d == Clock.Today ? "is-today" : "")" aria-current="@(d == Model.Day ? "date" : null)" asp-route-day="@d.ToString("yyyy-MM-dd")" asp-route-hotelId="@(Model.CalendarHotel?.Id)"><span>@thDays[i]</span><b>@d.Day</b></a></li> }
+        </ol>
+        <div class="hd-rooms">
+            @if (Model.CalendarHotel is null) { <p class="muted">ยังไม่มีโรงแรมให้แสดง</p> }
+            @foreach (var room in Model.RoomDays) {
+                <p class="hd-room-label">@room.RoomName · ว่าง @room.Left จาก @room.Capacity ห้อง</p>
+                @if (room.Stays.Count == 0) { <p class="hd-empty">ไม่มีแขกเข้า–ออกวันนี้</p> }
+                @foreach (var s in room.Stays) { var o = s.Row.Order;
+                    <div class="hd-stay @s.Kind"><div><strong>@s.Row.CustomerName</strong><small>@(s.Kind switch { "in" => "เช็กอิน", "wait" => "รอยืนยัน · เข้าพัก", "out" => "เช็กเอาต์", _ => "กำลังเข้าพัก" }) · @ThaiDates.Short(o.CheckIn)–@ThaiDates.Short(o.CheckOut) · @o.Rooms ห้อง @o.Guests คน</small></div>
+                        <span class="hd-avatar" style="background:@Hue(s.Row.Email)" aria-hidden="true">@Initial(s.Row.CustomerName)</span></div> }
+            }
+        </div>
+    </section>
+</div>
+
+<section class="hd-card hd-table-card" id="bookings" aria-labelledby="hd-bookings">
+    <div class="hd-card-head"><h2 id="hd-bookings">การจอง</h2>
+        <form method="get" class="hd-range"><label class="visually-hidden" for="hd-status">สถานะ</label><select id="hd-status" name="status" onchange="this.form.submit()"><option value="">ทุกสถานะ</option><option value="Arriving" selected="@(Model.Status=="Arriving")">เข้าพักวันนี้ · รอเช็กอิน</option>@foreach(var s in BookingStatus.All.Where(x => x != BookingStatus.PaymentReview)){<option value="@s" selected="@(Model.Status==s)">@BookingStatus.Label(s)</option>}</select><noscript><button class="stay-button secondary small-button" type="submit">ดู</button></noscript></form></div>
+    <div class="role-metrics work-queue hd-queue">
+        <a class="surface @(string.IsNullOrEmpty(Model.Status)?"is-active":"")" aria-current="@(string.IsNullOrEmpty(Model.Status)?"true":null)" asp-route-status=""><span>ทั้งหมด</span></a>
+        <a class="surface @(Model.Status=="Pending"?"is-active":"")" aria-current="@(Model.Status=="Pending"?"true":null)" asp-route-status="Pending"><span>รอยืนยัน</span><strong>@Model.Queue.ToConfirm</strong></a>
+        <a class="surface @(Model.Status=="Arriving"?"is-active":"")" aria-current="@(Model.Status=="Arriving"?"true":null)" asp-route-status="Arriving"><span>รอเช็กอินวันนี้</span><strong>@Model.Queue.Arriving</strong></a>
+        <a class="surface @(Model.Status=="CheckedIn"?"is-active":"")" aria-current="@(Model.Status=="CheckedIn"?"true":null)" asp-route-status="CheckedIn"><span>กำลังเข้าพัก</span><strong>@Model.Queue.InHouse</strong></a>
+    </div>
+    <div class="table-scroll booking-scroll" tabindex="0" aria-label="รายการจอง เลื่อนดูได้">
+    <table class="hd-table"><thead><tr><th>เลขการจอง</th><th>ผู้เข้าพัก</th><th>เช็กอิน</th><th>เช็กเอาต์</th><th>ห้อง</th><th>การชำระ</th><th>สถานะ</th><th>การทำงาน</th></tr></thead><tbody>
+    @foreach (var row in Model.Orders) { var o = row.Order;
+        <tr>
+            <td><span class="booking-ref">LG@(o.Id.ToString("D6"))</span>@if (Model.Hotels.Count > 1) { <small class="hd-sub">@o.HotelName</small> }</td>
+            <td><div class="hd-guest"><span class="hd-avatar" style="background:@Hue(row.Email)" aria-hidden="true">@Initial(row.CustomerName)</span><div>@row.CustomerName<small class="hd-sub">@row.Email</small></div></div>
+                @if (o.SpecialRequest is not null) { <p class="special-note"><strong>คำขอพิเศษ:</strong> @o.SpecialRequest</p> }</td>
+            <td class="hd-num">@o.CheckIn.ToString("dd/MM/yyyy")</td>
+            <td class="hd-num">@o.CheckOut.ToString("dd/MM/yyyy")</td>
+            <td>@o.RoomName<small class="hd-sub">@o.Rooms ห้อง · @o.Guests คน</small></td>
+            <td><span class="hd-chip @(o.PaymentMethod == PaymentMethods.Transfer ? "info" : "paid")">@(o.PaymentMethod == PaymentMethods.Transfer ? "โอน · ตรวจแล้ว" : "เครดิต")</span>
+                <small class="hd-sub hd-num">฿@o.Total.ToString("N2") · โรงแรมได้รับ ฿@FinanceRules.HotelShare(o).ToString("N2")</small><small class="hd-sub">ค่าธรรมเนียม Lodgo @o.CommissionPercent.ToString("0.##")%</small></td>
+            <td><span class="pill @StatusChip(o.Status) @(o.Status=="Pending"?"pending":"")">@BookingStatus.Label(o.Status)</span>@if (row.Note is not null) { <small class="hd-sub owner-reason">@row.Note</small> }</td>
+            <td><div class="hd-acts">
+                @if(o.Status=="Pending" && o.CheckIn>=today){<form asp-action="Confirm" method="post" class="owner-confirm"><input name="id" value="@o.Id" type="hidden" /><button class="stay-button small-button" type="submit">ยืนยันห้อง</button></form>}
+                @if(o.Status=="Confirmed" && o.CheckIn<=today && o.CheckOut>today){<form asp-action="CheckIn" method="post"><input name="id" value="@o.Id" type="hidden"/><button class="stay-button small-button" type="submit">เช็กอิน</button></form>}
+                @if(o.Status=="CheckedIn"){<form asp-action="CheckOut" method="post"><input name="id" value="@o.Id" type="hidden"/><button class="stay-button small-button" type="submit">เช็กเอาต์</button></form>}
+                @if(o.Status=="Confirmed" && o.CheckIn<=today){<form asp-action="NoShow" method="post"><input name="id" value="@o.Id" type="hidden"/><button class="stay-button secondary small-button" type="submit">ลูกค้าไม่มา</button></form>}
+                @if(Nontiwat_7362_L002.Services.BookingRules.CanCancel(o, Clock.Today)){<details class="hd-cancel"><summary aria-label="ยกเลิกการจอง LG@(o.Id.ToString("D6"))">ยกเลิก</summary><form asp-action="Cancel" method="post" class="form-stack staff-cancel"><input type="hidden" name="Id" value="@o.Id" /><label>เหตุผลยกเลิก<input name="Reason" maxlength="120" placeholder="เช่น ห้องไม่ว่างตามวันที่จอง" required /></label><button class="stay-button secondary small-button" type="submit">ยกเลิกและคืนเครดิต</button></form></details>}
+                @if(o.Status is "Completed" or "Cancelled" or "NoShow"){<span class="hd-sub">ปิดรายการแล้ว</span>}else if(o.Status=="Confirmed" && o.CheckIn>today){<span class="hd-sub">รอวันเข้าพัก</span>}
+            </div></td>
+        </tr> }
+    @if(Model.Orders.Count==0){<tr><td colspan="8">ไม่มีรายการจองในเงื่อนไขนี้</td></tr>}
+    </tbody></table></div>
+</section>
+
+<details class="hd-today"><summary>งานของคุณวันนี้</summary>
+@await Html.PartialAsync("_TodayPanel", await TodayPanel.ForAsync(User))
+</details>
+<section id="money" class="hd-money" aria-labelledby="hd-money-title"><h2 id="hd-money-title">ยอดของโรงแรม · เครดิตจำลอง</h2><p class="lead-note">เงินของแต่ละการจองนับเป็นของโรงแรมเมื่อลูกค้าเช็กอิน (หรือไม่มาเข้าพัก) · ค่าธรรมเนียม Lodgo คิดตามอัตราที่ล็อกไว้ตอนจอง โรงแรมได้รับส่วนที่เหลือ · Lodgo ตรวจเงินของลูกค้าที่โอนเข้ามาก่อนส่งคำขอจองให้โรงแรม</p>
+<div class="role-metrics"><div class="surface"><span>ยอดรอยืนยัน · ยังไม่เป็นยอดรับ</span><strong>฿@Model.Pending.ToString("N2")</strong></div><div class="surface"><span>เงินเข้า · ลูกค้าเช็กอินแล้ว</span><strong>฿@Model.Receipts.ToString("N2")</strong></div><div class="surface"><span>เงินออก · คืนจากรายการที่เคยนับเป็นเงินเข้า</span><strong>฿@Model.Refunds.ToString("N2")</strong></div><div class="surface"><span>ยอดรับสุทธิ</span><strong>฿@((Model.Receipts-Model.Refunds).ToString("N2"))</strong></div></div>
+<div class="role-metrics"><div class="surface"><span>ยอดที่ Lodgo ต้องโอนให้ · ลูกค้าเช็กอินแล้ว หักค่าธรรมเนียม Lodgo</span><strong>฿@Model.Owed.ToString("N2")</strong></div><div class="surface"><span>Lodgo โอนให้แล้ว</span><strong>฿@Model.PaidOut.ToString("N2")</strong></div><div class="surface"><span>ค้างรับจาก Lodgo</span><strong>฿@((Model.Owed-Model.PaidOut).ToString("N2"))</strong></div></div>
+<p class="simulation-box">ยอดเป็นของโรงแรม พนักงานทุกคนในทีมเห็นตัวเลขเดียวกัน ไม่ใช่การโอนเงินจริง กติกายกเลิก: รายการรอยืนยันยกเลิกได้เสมอ รายการยืนยันแล้วยกเลิกได้ก่อนวันเช็กอิน ถ้าถึงวันแล้วลูกค้าไม่มาให้กด "ลูกค้าไม่มา" คำขอที่ไม่ได้ยืนยันก่อนวันเช็กอิน ระบบยกเลิกและคืนเครดิตให้อัตโนมัติ</p>
+<p><a class="stay-button secondary" asp-controller="StayEnvironment" asp-action="Edit">จัดการบรรยากาศ วิว และสระว่ายน้ำ</a>@if(Model.IsAdmin){<text> </text><a class="stay-button secondary" asp-controller="HotelManagement" asp-action="Index">จัดการทีมพนักงานโรงแรม</a>}</p>
+<details class="money-log"><summary>ประวัติเงินเข้า–ออกของโรงแรม (@Model.Entries.Count รายการ)</summary><div class="surface table-scroll history-panel"><p class="lead-note">ยอดสรุปรวมทุกรายการ ประวัติแสดงล่าสุดไม่เกิน 200 รายการ</p><table class="ledger-table"><thead><tr><th>วันเวลา</th><th>โรงแรม / รายการ</th><th>ประเภท</th><th>จำนวน</th></tr></thead><tbody>@foreach(var e in Model.Entries){<tr><td>@e.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</td><td>@e.HotelName<br />LG@(e.OrderId.ToString("D6"))</td><td>@(e.Kind=="Receipt"?"รับจากการยืนยัน":"คืนเครดิตลูกค้า")</td><td class="@(e.Amount>0?"positive":"negative")">@e.Amount.ToString("N2")</td></tr>}@if(Model.Entries.Count==0){<tr><td colspan="4">ยังไม่มียอดรับหรือคืนเครดิต</td></tr>}</tbody></table></div></details></section></section>

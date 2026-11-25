@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Nontiwat_7362_L002</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+        :root {
+            --rc-navy: #14202E;
+            --rc-navy-soft: #1E2C3D;
+            --rc-line: #33445A;
+            --rc-amber: #F2A93B;
+            --rc-amber-dark: #D98F1F;
+            --rc-paper: #FBF9F5;
+            --rc-ink: #202B36;
+            --rc-ink-muted: #64707D;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--rc-paper);
+            color: var(--rc-ink);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-heading);
+        }
+
+        a { color: inherit; }
+
+        /* ---------- Header ---------- */
+        .rc-header {
+            background-color: var(--rc-navy);
+            border-bottom: 3px solid var(--rc-amber);
+        }
+
+        .rc-header .navbar {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .rc-brand {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #FFFFFF;
+            letter-spacing: 0.01em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rc-brand .rc-brand-mark {
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 50%;
+            background-color: var(--rc-amber);
+            display: inline-block;
+        }
+
+        .rc-brand:hover {
+            color: #FFFFFF;
+        }
+
+        .rc-nav {
+            gap: 2rem;
+        }
+
+        .rc-nav .nav-link {
+            font-family: var(--font-heading);
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #C9D2DC;
+            padding: 0.35rem 0.1rem;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .rc-nav .nav-link:hover,
+        .rc-nav .nav-link.active {
+            color: #FFFFFF;
+            border-bottom-color: var(--rc-amber);
+        }
+
+        .rc-btn-ghost {
+            font-family: var(--font-heading);
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #FFFFFF;
+            background: transparent;
+            border: 1px solid var(--rc-line);
+            border-radius: 2px;
+            padding: 0.45rem 1.1rem;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .rc-btn-ghost:hover {
+            border-color: var(--rc-amber);
+            background-color: var(--rc-navy-soft);
+            color: #FFFFFF;
+        }
+
+        .rc-btn-solid {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--rc-navy);
+            background-color: var(--rc-amber);
+            border: 1px solid var(--rc-amber);
+            border-radius: 2px;
+            padding: 0.45rem 1.1rem;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .rc-btn-solid:hover {
+            background-color: var(--rc-amber-dark);
+            border-color: var(--rc-amber-dark);
+            color: var(--rc-navy);
+        }
+
+        .rc-header .navbar-toggler {
+            border-color: var(--rc-line);
+        }
+
+        .rc-header .navbar-toggler-icon {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        /* ---------- Header: logged-in user ---------- */
+        .rc-user {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-heading);
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #FFFFFF;
+        }
+
+        .rc-user-avatar {
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 50%;
+            background-color: var(--rc-navy-soft);
+            border: 1.5px solid var(--rc-amber);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--rc-amber);
+        }
+
+        .rc-btn-logout {
+            font-family: var(--font-heading);
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #C9D2DC;
+            background: transparent;
+            border: 1px solid var(--rc-line);
+            border-radius: 2px;
+            padding: 0.45rem 1.1rem;
+            transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .rc-btn-logout:hover {
+            border-color: var(--rc-amber);
+            background-color: var(--rc-navy-soft);
+            color: #FFFFFF;
+        }
+
+        /* ---------- Footer ---------- */
+        .rc-footer {
+            background-color: var(--rc-navy);
+            border-top: 3px solid var(--rc-amber);
+            color: #C9D2DC;
+        }
+
+        .rc-footer h6 {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: #FFFFFF;
+            letter-spacing: 0.02em;
+            margin-bottom: 0.75rem;
+        }
+
+        .rc-footer p,
+        .rc-footer a {
+            font-size: 0.9rem;
+            color: #A9B4C0;
+        }
+
+        .rc-footer a {
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+
+        .rc-footer a:hover {
+            color: var(--rc-amber);
+        }
+
+        .rc-footer i {
+            color: var(--rc-amber);
+        }
+
+        .rc-footer hr {
+            border-color: var(--rc-line);
+            opacity: 1;
+            margin: 1.75rem 0 1.25rem;
+        }
+
+        .rc-footer .rc-copyright {
+            font-size: 0.8rem;
+            color: #7A8796;
+        }
+    </style>
+    <partial name="_ThemeHead" />
+</head>
+
+<body class="theme-editorial">
+    <partial name="_WorkShell" />
+    <header class="rc-header">
+        <nav class="navbar navbar-expand-md py-3">
+            <div class="container-fluid px-4 d-flex align-items-center">
+
+                <a class="rc-brand d-inline-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index" aria-label="Lodgo">
+                    <img src="~/images/logo-white.png" alt="Lodgo" height="34" />
+                </a>
+
+                <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse flex-grow-0 ms-4" id="mainNavbar">
+                    <ul class="navbar-nav rc-nav flex-row">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">หน้าแรก</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Car" asp-action="Index">รถเช่า</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Booking" asp-action="MyBookings">การจองของฉัน</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    <div class="rc-user">
+                        <span class="rc-user-avatar">
+                            <i class="bi bi-person-fill"></i>
+                        </span>
+                        <span>@(User.Identity != null && User.Identity.IsAuthenticated ? User.Identity.Name : "สมชาย ใจดี")</span>
+                    </div>
+                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <button type="submit" class="rc-btn-logout">
+                            <i class="bi bi-box-arrow-right me-1"></i>
+                            ออกจากระบบ
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </nav>
+    </header>
+
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+
+    <footer class="rc-footer mt-4">
+        <div class="container-fluid px-4 py-4">
+            <div class="row">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h6>Lodgo</h6>
+                    <p class="mb-1">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110
+                    </p>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h6>ติดต่อเรา</h6>
+                    <p class="mb-1">
+                        <i class="bi bi-telephone me-1"></i>
+                        โทร: 02-123-4567
+                    </p>
+                    <p class="mb-1">
+                        <i class="bi bi-envelope me-1"></i>
+                        contact@rentalcar.com
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h6>ติดตามเรา</h6>
+                    <a href="https://facebook.com/rentalcan" target="_blank" rel="noopener">
+                        <i class="bi bi-facebook me-1"></i>
+                        facebook.com/rentalcar
+                    </a>
+                </div>
+            </div>
+            <hr />
+            <p class="text-center rc-copyright mb-0">
+                &copy; @DateTime.Now.Year Lodgo. สงวนลิขสิทธิ์ทุกประการ
+            </p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

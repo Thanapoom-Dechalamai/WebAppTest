@@ -1,0 +1,10 @@
+@model CustomerDashboard
+@inject Nontiwat_7362_L002.Services.TodayService TodayPanel
+@{ Layout="_StayLayout"; ViewData["Title"]="Customer · พื้นที่ลูกค้า"; }
+<section class="stay-container commerce-page">
+<partial name="_RoleNavigation" /><h1>วางแผนวันพักผ่อนของคุณ</h1>
+@await Html.PartialAsync("_TodayPanel", await TodayPanel.ForAsync(User))
+
+<div class="role-metrics"><div class="surface"><span>เครดิตคงเหลือ</span><strong>฿@Model.Balance.ToString("N2")</strong></div><div class="surface"><span>รายการจองของฉัน</span><strong>@Model.Bookings</strong></div></div>
+<div class="role-actions"><a class="surface" asp-controller="Account" asp-action="Index" asp-fragment="hotels"><h2>ค้นหาที่พัก</h2><p>100 ที่พัก ครบ 77 จังหวัด</p></a><a class="surface" asp-controller="Stays" asp-action="Bookings"><h2>การจองของฉัน</h2><p>ดูรายการและสถานะการจอง</p></a><a class="surface" asp-action="Promotions"><h2>โปรโมชั่น</h2><p>อ่านประกาศโปรโมชั่นล่าสุด</p></a><a class="surface" asp-controller="Member" asp-action="Wallet"><h2>เครดิต</h2><p>เติมเครดิตและดูประวัติ</p></a><a class="surface" asp-controller="Wishlist" asp-action="Index"><h2>รายการโปรด</h2><p>ที่พักที่กดหัวใจเก็บไว้</p></a><a class="surface" href="/Support"><h2>แชตกับเจ้าหน้าที่</h2><p>ขอจอง แก้ไข ยกเลิก หรือแจ้งปัญหา</p></a></div>
+</section>

@@ -1,0 +1,37 @@
+@model IReadOnlyList<PaymentReviewRow>
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ตรวจการชำระเงิน"; var dup = ViewData["DuplicateRefs"] as HashSet<string> ?? new HashSet<string>(); }
+<section class="stay-container commerce-page payments-page"><partial name="_RoleNavigation" />
+    <p><a class="back-link" asp-action="Index">รายงานบัญชี</a></p>
+    <h1>ตรวจการชำระเงิน</h1>
+    <p class="lead-note">ทุกการจองของลูกค้ารออยู่ที่นี่ก่อน เรียงจากรายการเก่าสุด จ่ายด้วยเครดิต: ตรวจว่าตัดเครดิตครบตามยอด · โอนเงิน: ตรวจสลิปหรือเลขที่รายการกับบัญชี Lodgo แล้วกดยืนยัน รายการจึงไปถึงพนักงานโรงแรม ถ้าไม่ผ่าน รายการถูกยกเลิกและลูกค้าได้รับแจ้งพร้อมเหตุผล</p>
+    <partial name="_CommerceMessage" />
+    @if (Model.Count == 0) { <p class="surface empty-note">ไม่มีการจองรอตรวจการชำระเงิน</p> }
+    <div class="payment-queue">
+        @foreach (var row in Model) {
+            var o = row.Order; var transfer = o.PaymentMethod == PaymentMethods.Transfer;
+            <article class="surface payment-card" id="pay-@o.Id">
+                <header><h2>LG@(o.Id.ToString("D6")) · ฿@o.Total.ToString("N2")</h2><span class="pill pending">@BookingStatus.Label(o.Status)</span></header>
+                <dl class="summary-list">
+                    <dt>ลูกค้า</dt><dd>@row.CustomerName<br /><small>@row.CustomerEmail</small></dd>
+                    <dt>ที่พัก</dt><dd>@o.HotelName · @o.RoomName @o.Rooms ห้อง</dd>
+                    <dt>เข้าพัก</dt><dd>@ThaiDates.Short(o.CheckIn) – @ThaiDates.Short(o.CheckOut)</dd>
+                    <dt>ส่งเมื่อ</dt><dd>@o.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture)</dd>
+                    <dt>วิธีชำระ</dt><dd>@(transfer ? "โอนเงินเข้าบัญชี Lodgo" : "เครดิต Lodgo · ตัดเครดิตแล้วตอนจอง")</dd>
+                    @if (transfer) {
+                        <dt>เลขที่รายการ</dt><dd>@(o.PaymentRef ?? "ไม่ได้กรอก")@if (o.PaymentRef is not null && dup.Contains(o.PaymentRef)) { <br /><strong class="dup-ref">เลขที่รายการซ้ำกับการจองอื่น ตรวจให้แน่ใจว่าไม่ใช่การโอนครั้งเดียวกัน</strong> }</dd>
+                        <dt>สลิป</dt><dd>@if (o.SlipFile is not null) { <a asp-controller="Stays" asp-action="Slip" asp-route-id="@o.Id.ToString()" target="_blank" rel="noopener">เปิดสลิป<span class="visually-hidden"> LG@(o.Id.ToString("D6")) (เปิดแท็บใหม่)</span></a> } else { <span>ไม่ได้แนบ</span> }</dd>
+                    }
+                </dl>
+                <div class="payment-actions">
+                    <form asp-action="ApprovePayment" method="post"><input type="hidden" name="id" value="@o.Id" /><button class="stay-button" type="submit">ยอดถูกต้อง · ส่งให้โรงแรม</button></form>
+                    <form asp-action="RejectPayment" method="post" class="reject-form">
+                        <input type="hidden" name="id" value="@o.Id" />
+                        <label for="reason-@o.Id">เหตุผลที่ไม่ผ่าน</label>
+                        <input id="reason-@o.Id" name="reason" maxlength="120" required placeholder="@(transfer ? "เช่น ยอดในสลิปไม่ตรง" : "เช่น ยอดเครดิตที่ตัดไม่ตรงกับราคา")" />
+                        <button class="stay-button secondary" type="submit">@(transfer ? "ไม่ผ่าน · ยกเลิกรายการ" : "ไม่ผ่าน · ยกเลิกและคืนเครดิต")</button>
+                    </form>
+                </div>
+            </article>
+        }
+    </div>
+</section>

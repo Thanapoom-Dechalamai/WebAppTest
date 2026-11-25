@@ -1,0 +1,64 @@
+@model BookingDetailPage
+@using Nontiwat_7362_L002.Services
+@{ Layout = "_PrintLayout"; var o = Model.Order; var number = "LG" + o.Id.ToString("D6");
+   ViewData["Title"] = "ใบยืนยันการจอง " + number; var freeCancelUntil = o.CheckIn.AddDays(-1); }
+<div class="print-toolbar no-print">
+    <a class="print-back" href="/Stays/Order/@o.Id">กลับไปหน้าการจอง</a>
+    <button type="button" class="print-button" onclick="window.print()">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        พิมพ์ใบยืนยัน
+    </button>
+</div>
+<main class="print-sheet">
+    <header class="print-head">
+        <div><p class="print-brand">Lodgo<span>.</span></p><p class="print-sub">ใบยืนยันการจองที่พัก</p></div>
+        <div class="print-number"><span>หมายเลขการจอง</span><strong class="booking-ref">@number</strong><span class="print-status">@BookingStatus.Label(o.Status)</span></div>
+    </header>
+
+    <section class="print-block">
+        <h1>@o.HotelName</h1>
+        <p class="print-muted">@o.City · ประเทศไทย</p>
+        <div class="print-dates">
+            <div><span>เช็กอิน</span><strong>@ThaiDates.Long(o.CheckIn)</strong></div>
+            <div><span>เช็กเอาต์</span><strong>@ThaiDates.Long(o.CheckOut)</strong></div>
+            <div><span>ระยะเวลา</span><strong>@Model.Nights คืน</strong></div>
+        </div>
+    </section>
+
+    <section class="print-grid">
+        <div class="print-block">
+            <h2>ผู้เข้าพัก</h2>
+            <dl><dt>ชื่อผู้จอง</dt><dd>@Model.GuestName</dd><dt>อีเมล</dt><dd>@Model.GuestEmail</dd><dt>จำนวนผู้เข้าพัก</dt><dd>@o.Guests คน</dd></dl>
+        </div>
+        <div class="print-block">
+            <h2>ห้องพัก</h2>
+            <dl><dt>ประเภทห้อง</dt><dd>@o.RoomName</dd><dt>จำนวนห้อง</dt><dd>@o.Rooms ห้อง</dd><dt>จองเมื่อ</dt><dd>@o.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm") น.</dd></dl>
+        </div>
+    </section>
+
+    <section class="print-block">
+        <h2>คำขอพิเศษ</h2>
+        @if (o.SpecialRequest is not null) { <p class="print-request">@o.SpecialRequest</p><p class="print-muted">โรงแรมจะพยายามจัดให้ แต่ไม่รับประกัน</p> } else { <p class="print-muted">ไม่มีคำขอพิเศษ</p> }
+    </section>
+
+    <section class="print-block">
+        <h2>รายละเอียดราคา</h2>
+        <table class="print-price">
+            <tr><th scope="row">@o.Rooms ห้อง × @Model.Nights คืน × ฿@o.NightlyRate.ToString("N2")</th><td>฿@((o.Subtotal ?? o.Total).ToString("N2"))</td></tr>
+            @if (o.DiscountAmount > 0) { <tr><th scope="row">ส่วนลด @o.PromotionCode</th><td>−฿@o.DiscountAmount.ToString("N2")</td></tr> }
+            <tr class="print-total"><th scope="row">ราคารวมทั้งสิ้น</th><td>฿@o.Total.ToString("N2")</td></tr>
+        </table>
+        <p class="print-muted">ชำระด้วยเครดิต Lodgo (จำลอง)</p>
+    </section>
+
+    <section class="print-block">
+        <h2>นโยบายการยกเลิก</h2>
+        <ul class="print-policy">
+            <li><strong>ยกเลิกฟรี</strong> ถึง @ThaiDates.Long(freeCancelUntil) (ก่อนวันเช็กอิน) คืนเครดิตเต็มจำนวน</li>
+            <li><strong>ยกเลิกไม่ได้ · ไม่คืนเครดิต</strong> ตั้งแต่วันเช็กอิน @ThaiDates.Long(o.CheckIn) หรือหากไม่ได้มาเข้าพัก</li>
+            <li><strong>โรงแรมเป็นฝ่ายยกเลิก</strong> คืนเครดิตเต็มจำนวนและคืนสิทธิ์โค้ดส่วนลด</li>
+        </ul>
+    </section>
+
+    <footer class="print-foot">แสดงหมายเลข @number ที่แผนกต้อนรับในวันเช็กอิน · ระบบจองทดลอง ชำระด้วยเครดิตจำลอง ไม่ใช่การจองกับโรงแรมจริง</footer>
+</main>

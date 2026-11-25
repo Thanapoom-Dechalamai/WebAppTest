@@ -1,0 +1,34 @@
+@model HotelRoomList
+@{
+    Layout = "_StayLayout";
+    ViewData["Title"] = "ประเภทห้องและราคา";
+}
+<section class="stay-container commerce-page">
+    <h1>ประเภทห้องและราคา · @Model.Hotel.Name</h1>
+    <partial name="_CommerceMessage" />
+    <div class="role-inline hotel-catalog-actions">
+        <a class="stay-button" asp-action="Edit" asp-route-id="@Model.Hotel.Id">เพิ่มประเภทห้อง</a>
+        <a class="stay-button secondary" asp-controller="HotelCatalog" asp-action="Edit" asp-route-id="@Model.Hotel.Id">กลับหน้าแก้ไขโรงแรม</a>
+    </div>
+    <div class="surface table-scroll history-panel">
+        <table class="ledger-table">
+            <thead><tr><th scope="col">ประเภทห้อง</th><th scope="col">บาทต่อคืน</th><th scope="col">จำนวนปกติ</th><th scope="col">สถานะ</th><th scope="col">จัดการ</th></tr></thead>
+            <tbody>
+                @foreach (var room in Model.Rooms) {
+                    <tr>
+                        <th scope="row">@room.Name @if (room.HotelPrice is null) { <small>ค่าเดิม</small> }</th>
+                        <td>@room.NightlyRate(Model.Hotel.Price).ToString("N2")</td>
+                        <td>@room.Capacity</td>
+                        <td>@(room.IsActive ? "เปิดขาย" : "ปิดขาย")</td>
+                        <td>
+                            <div class="role-inline">
+                                <a class="stay-button secondary small-button" asp-action="Edit" asp-route-id="@Model.Hotel.Id" asp-route-roomId="@room.Id">แก้ไข<span class="visually-hidden"> @room.Name</span></a>
+                                <a class="stay-button secondary small-button" asp-controller="HotelPhotos" asp-action="Index" asp-route-id="@Model.Hotel.Id" asp-route-roomId="@room.Id">รูปห้อง<span class="visually-hidden"> @room.Name</span></a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,20 @@
+.travel-loader[hidden]{display:none!important}
+.travel-loader{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;box-sizing:border-box;width:220px;max-width:calc(100vw - 32px);padding:22px 18px 18px;border-radius:22px;border:1px solid #e1e9e5;background:#fffffffa;color:#285544;box-shadow:0 12px 50px #143a3029;text-align:center;transition:opacity .12s,transform .12s;pointer-events:auto}
+.travel-loader.arriving{opacity:0;transform:translate(-50%,-48%);pointer-events:none}
+.travel-loader-art{position:relative;width:88px;height:94px;margin:0 auto 12px;color:#df8b3e}
+.travel-loader-art svg{display:block;width:88px;height:88px;overflow:visible}
+.travel-icon{transform-origin:50px 50px;opacity:0;animation:travel-switch 3.6s ease-in-out infinite}
+.travel-case{animation-delay:0s}.travel-plane{animation-delay:1.2s}.travel-hotel{animation-delay:2.4s}
+.travel-icon path,.travel-icon rect{stroke-dasharray:260;stroke-dashoffset:260;animation:travel-draw 3.6s ease-in-out infinite}
+.travel-plane path{animation-delay:1.2s}.travel-hotel path{animation-delay:2.4s}
+.travel-track{position:absolute;bottom:0;left:24px;right:24px;height:3px;border-radius:50%;background:#e9ece7}
+.travel-loader strong{display:block;font:500 13px/1.6 "Noto Sans Thai",sans-serif;color:#315a49}
+.travel-loader-dots{display:flex;justify-content:center;gap:5px;margin-top:12px}
+.travel-loader-dots i{width:4px;height:4px;border-radius:50%;background:#df8b3e;animation:travel-dot 1.2s ease-in-out infinite}
+.travel-loader-dots i:nth-child(2){animation-delay:.15s}.travel-loader-dots i:nth-child(3){animation-delay:.3s}
+.travel-loader button{display:block;margin:12px auto 0;border:0;border-radius:8px;padding:5px 10px;background:#eef4f0;color:#315a49;font:inherit;font-size:12px;cursor:pointer}
+.travel-loader button[hidden]{display:none}
+@keyframes travel-switch{0%{opacity:0;transform:translateY(7px) scale(.92)}5%,26%{opacity:1;transform:translateY(0) scale(1)}33%,100%{opacity:0;transform:translateY(-7px) scale(.96)}}
+@keyframes travel-draw{0%{stroke-dashoffset:260}18%,30%{stroke-dashoffset:0}34%,100%{stroke-dashoffset:260}}
+@keyframes travel-dot{0%,70%,100%{opacity:.25;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.travel-loader{transition:none}.travel-icon,.travel-icon path,.travel-icon rect,.travel-loader-dots i{animation:none}.travel-case{opacity:1}.travel-case path,.travel-case rect{stroke-dashoffset:0}}

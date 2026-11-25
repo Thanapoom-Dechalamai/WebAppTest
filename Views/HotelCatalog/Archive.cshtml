@@ -1,0 +1,16 @@
+@model HotelCatalogRow
+@{
+    Layout = "_StayLayout";
+    ViewData["Title"] = "นำโรงแรมออกจากหน้าเว็บ";
+}
+<section class="stay-container commerce-page">
+    <h1>นำโรงแรมออกจากหน้าเว็บ</h1>
+    <form class="surface form-stack hotel-catalog-editor" method="post" asp-action="Archive" asp-route-id="@Model.Id">
+        <h2>@Model.Name</h2>
+        <p>โรงแรมจะหายจากหน้าที่พักและหยุดรับจองใหม่ รายการจองและประวัติเดิมยังอยู่ และเปิดแสดงอีกครั้งได้จากหน้าจัดการโรงแรม</p>
+        <div class="role-inline">
+            <button class="stay-button" type="submit">ยืนยันนำออก</button>
+            <a class="stay-button secondary" asp-action="Edit" asp-route-id="@Model.Id">กลับหน้าแก้ไข</a>
+        </div>
+    </form>
+</section>

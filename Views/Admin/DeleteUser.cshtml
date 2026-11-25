@@ -1,0 +1,26 @@
+@model EditUserViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "ยืนยันการลบผู้ใช้";
+    var isSelf = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.Id.ToString();
+}
+<section class="auth-card card border-0 w-100">
+    <div class="auth-panel card-body">
+        <h1 class="mb-3">ยืนยันการลบผู้ใช้</h1>
+        <p>รหัสผู้ใช้ #@Model.Id · @Model.FirstName @Model.LastName</p>
+        <p>@Model.Email · @Model.Role</p>
+        @if (isSelf)
+        {
+            <div class="alert alert-warning">ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้</div>
+        }
+        else
+        {
+            <div class="alert alert-danger">ข้อมูลผู้ใช้นี้จะถูกลบออกจากฐานข้อมูล และไม่สามารถเข้าสู่ระบบได้อีก</div>
+            <form asp-action="DeleteUser" method="post" class="mb-3">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-danger w-100">ยืนยันลบผู้ใช้</button>
+            </form>
+        }
+        <a asp-action="UserList" class="btn btn-outline-primary w-100">ยกเลิก / กลับรายชื่อผู้ใช้</a>
+    </div>
+</section>

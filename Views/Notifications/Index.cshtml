@@ -1,0 +1,24 @@
+@model NotificationListPage
+@{ Layout = "_StayLayout"; ViewData["Title"] = "การแจ้งเตือน"; }
+<section class="stay-container commerce-page notifications-page">
+    <h1>การแจ้งเตือนของคุณ</h1>
+    <p class="lead-note">สถานะการจองที่เปลี่ยน เช่น โรงแรมยืนยัน ยกเลิก หรือมีคำขอจองใหม่ จะแจ้งที่นี่ กดที่รายการเพื่อเปิดดูรายละเอียด</p>
+    <partial name="_CommerceMessage" />
+    <div class="notify-toolbar">
+        <nav class="filter-pills"><a class="@(!Model.UnreadOnly ? "is-active" : "")" asp-action="Index">ทั้งหมด</a><a class="@(Model.UnreadOnly ? "is-active" : "")" asp-action="Index" asp-route-unread="true">ยังไม่อ่าน (@Model.Unread)</a></nav>
+        @if (Model.Unread > 0) { <form asp-action="ReadAll" method="post"><button class="stay-button secondary" type="submit">ทำเครื่องหมายว่าอ่านทั้งหมด</button></form> }
+    </div>
+    @if (Model.Items.Count == 0) {
+        <div class="surface empty-results"><p>@(Model.UnreadOnly ? "อ่านครบทุกรายการแล้ว" : "ยังไม่มีการแจ้งเตือน")</p></div>
+    } else {
+        <ul class="notify-list">
+            @foreach (var n in Model.Items) {
+                <li class="@(n.IsRead ? "" : "is-unread")">
+                    <form asp-action="Open" method="post"><input type="hidden" name="id" value="@n.Id" />
+                        <button type="submit"><strong>@n.Title</strong><span>@n.Body</span><time>@n.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm") น.</time></button>
+                    </form>
+                </li>
+            }
+        </ul>
+    }
+</section>

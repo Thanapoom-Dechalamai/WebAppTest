@@ -1,0 +1,49 @@
+@model AddUserViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "เพิ่มบัญชีผู้ใช้";
+}
+<section class="auth-card card border-0 w-100 adduser-page" aria-labelledby="page-title">
+    <div class="auth-panel card-body">
+        <h1 id="page-title" class="mb-2">เพิ่มบัญชีทีมงาน</h1>
+        <p class="page-intro mb-4">กรอกข้อมูลสมาชิกและเลือกสิทธิ์การใช้งาน</p>
+        <form asp-controller="Manager" asp-action="AddEmployee" method="post" class="adduser-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger small full-width" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="FirstName" class="form-label"></label>
+                <input asp-for="FirstName" class="form-control" autocomplete="given-name" required maxlength="80" />
+                <span asp-validation-for="FirstName" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="LastName" class="form-label"></label>
+                <input asp-for="LastName" class="form-control" autocomplete="family-name" required maxlength="80" />
+                <span asp-validation-for="LastName" class="text-danger small"></span>
+            </div>
+            <div class="mb-3 full-width">
+                <label asp-for="Email" class="form-label"></label>
+                <input title="@EmailRules.Message" type="email" asp-for="Email" class="form-control" placeholder="example@email.com" autocomplete="email" required maxlength="254" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" required />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" required />
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+            <div class="mb-3 full-width">
+                <label asp-for="Role" class="form-label"></label>
+                <select asp-for="Role" class="form-select">@foreach (var role in (User.IsInRole(AppRoles.Admin) ? AppRoles.All : AppRoles.TeamRoles)) { <option value="@role">@AppRoles.Label(role)</option> }</select>
+                <span asp-validation-for="Role" class="text-danger small"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">สร้างบัญชี</button>
+            <a asp-controller="Manager" asp-action="Index" class="btn btn-outline-primary w-100">กลับไปจัดการทีม</a>
+        </form>
+    </div>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+
+

@@ -1,0 +1,33 @@
+@model Nontiwat_7362_L002.Models.StayEnvironment
+@using Nontiwat_7362_L002.Models
+@{ Layout = "_StayLayout"; ViewData["Title"] = "บรรยากาศและวิวที่พัก"; var hotels = (List<HotelCardViewModel>)ViewBag.Hotels; }
+<section class="stay-container commerce-page">
+<partial name="_RoleNavigation" />
+<h1>บรรยากาศและวิวที่พัก</h1>
+<p>เพิ่มข้อมูลจริงให้ลูกค้าเลือกที่พักได้ตรงใจ ระยะทางเป็นระยะโดยประมาณจากที่พักถึงชายหาดหรือพื้นที่ป่าที่ใกล้ที่สุด</p>
+<partial name="_CommerceMessage" />
+<form asp-controller="StayEnvironment" asp-action="Edit" asp-route-id="" asp-fragment="environment-editor" method="get" class="surface form-stack">
+<label for="environment-hotel">เลือกที่พักที่ต้องการแก้ไข</label>
+<select name="id" id="environment-hotel" required><option value="">เลือกที่พัก</option>
+@foreach(var hotel in hotels) { <option value="@hotel.Id" selected="@(hotel.Id == Model.HotelId)">@hotel.Name — @hotel.City</option> }
+</select><button class="stay-button" type="submit">โหลดข้อมูลเพื่อแก้ไข</button>
+</form>
+@if(hotels.Count == 0) { <p class="simulation-box">ยังไม่มีที่พักในความดูแล กรุณาให้ผู้ดูแลระบบกำหนดพนักงานก่อน</p> }
+@if(!string.IsNullOrEmpty(Model.HotelId)) {
+<form id="environment-editor" tabindex="-1" asp-action="Edit" asp-route-id="" asp-fragment="environment-editor" method="post" class="surface form-stack environment-editor">
+<h2>@hotels.First(x => string.Equals(x.Id, Model.HotelId, StringComparison.OrdinalIgnoreCase)).Name</h2>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<input asp-for="HotelId" type="hidden" />
+<div class="environment-fields">
+<label>หมวดหมู่บรรยากาศ<select asp-for="Category"><option value="">ยังไม่ระบุ</option>@foreach(var item in StayEnvironmentOptions.Categories){<option value="@item.Key">@item.Value</option>}</select></label>
+<label>วิวหลัก<select asp-for="ViewType"><option value="">ยังไม่ระบุ</option>@foreach(var item in StayEnvironmentOptions.Views){<option value="@item.Key">@item.Value</option>}</select></label>
+<label>สระว่ายน้ำ<select asp-for="HasPool"><option value="">ยังไม่ระบุ</option><option value="true">มีสระว่ายน้ำ</option><option value="false">ไม่มีสระว่ายน้ำ</option></select></label>
+<label>ระยะห่างทะเล (กม.)<input asp-for="SeaDistanceKm" type="number" min="0" max="2000" step="0.001" placeholder="เช่น 0.3 = 300 เมตร" /><span asp-validation-for="SeaDistanceKm"></span></label>
+<label>ระยะห่างป่า (กม.)<input asp-for="ForestDistanceKm" type="number" min="0" max="2000" step="0.001" placeholder="เช่น 1.5" /><span asp-validation-for="ForestDistanceKm"></span></label>
+</div>
+<label>รายละเอียดวิวและพื้นที่โดยรอบ<textarea asp-for="ViewDescription" maxlength="600" rows="4" placeholder="เช่น มองเห็นสวนจากพื้นที่ส่วนกลาง วิวจากห้องพักขึ้นอยู่กับประเภทห้อง"></textarea></label>
+<p>เว้นระยะทางว่างเมื่อยังไม่ทราบ กรอก 0 เฉพาะเมื่อที่พักติดพื้นที่นั้น ข้อมูลนี้แสดงให้ลูกค้าเห็นและใช้ในการกรอง</p>
+<div><button class="stay-button" type="submit">บันทึกข้อมูล</button> <a class="stay-button secondary" asp-controller="Stays" asp-action="Details" asp-route-id="@Model.HotelId">ดูหน้าที่พัก</a></div>
+</form>
+}
+</section>

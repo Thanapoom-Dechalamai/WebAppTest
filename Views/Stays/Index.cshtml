@@ -1,0 +1,104 @@
+@model StayListPage
+@using Nontiwat_7362_L002.Models
+@{
+    Layout = "_StayLayout"; ViewData["Title"] = "ที่พัก";
+    var q = Model.Query; var inv = System.Globalization.CultureInfo.InvariantCulture;
+    ViewData["Query"] = q;
+    var catLabel = q.Category is not null && StayEnvironmentOptions.DiscoveryCategories.TryGetValue(q.Category, out var cl) ? cl : null;
+    var heading = catLabel ?? (q.Destination is not null ? "ที่พักใน" + q.Destination : "ที่พักทั้งหมด");
+    Func<string?, string> catHref = key => q.With(new Dictionary<string, string?> { ["category"] = key, ["page"] = null });
+    var filtered = q.MinPrice is not null || q.MaxPrice is not null || q.Rating is not null;
+}
+<div class="stay-container stay-list-page">
+    @if (User.IsInRole(AppRoles.Admin)) {
+        <div class="role-inline hotel-catalog-actions">
+            <a class="stay-button" asp-controller="HotelCatalog" asp-action="Create">เพิ่มโรงแรม</a>
+            <a class="stay-button secondary" asp-controller="HotelCatalog" asp-action="Index">จัดการข้อมูลโรงแรม</a>
+        </div>
+    }
+    <partial name="_SearchBar" model="Model.Cities" />
+    <partial name="_CategoryLinks" model="Model.All" view-data='@(new ViewDataDictionary(ViewData) { ["Current"] = q.Category, ["HrefFor"] = catHref })' />
+    <div class="stay-list-layout">
+        <aside class="stay-filters" aria-labelledby="filters-title">
+            <form method="get" action="/Stays">
+                <h2 id="filters-title">ตัวกรอง</h2>
+                @foreach (var (k, v) in new[] { ("destination", q.Destination), ("q", q.Q), ("category", q.Category), ("sort", q.Sort == "recommended" ? null : q.Sort), ("checkin", q.CheckIn), ("checkout", q.CheckOut), ("guests", q.Guests?.ToString()), ("rooms", q.Rooms?.ToString()), ("promo", q.Promo) }) {
+                    if (!string.IsNullOrEmpty(v)) { <input type="hidden" name="@k" value="@v" /> }
+                }
+                <fieldset>
+                    <legend>ราคาต่อคืน (บาท)</legend>
+                    <div class="price-pair">
+                        <label><span>ต่ำสุด</span><input type="number" name="minPrice" min="0" step="100" inputmode="numeric" value="@q.MinPrice" placeholder="0" /></label>
+                        <label><span>สูงสุด</span><input type="number" name="maxPrice" min="0" step="100" inputmode="numeric" value="@q.MaxPrice" placeholder="@Model.PriceCeiling.ToString("N0")" /></label>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>คะแนนรีวิว</legend>
+                    <label class="radio-row"><input type="radio" name="rating" value="" checked="@(q.Rating is null)" /> ทุกคะแนน</label>
+                    @foreach (var r in StayListQuery.Ratings) {
+                        <label class="radio-row"><input type="radio" name="rating" value="@r.ToString("0.0", inv)" checked="@(q.Rating == r)" /> @r.ToString("0.0", inv) ขึ้นไป <span class="muted">จาก 5</span></label>
+                    }
+                </fieldset>
+                <button class="stay-button" type="submit">ใช้ตัวกรอง</button>
+                @if (filtered) { <a class="text-link clear-filters" href="@q.With(new Dictionary<string, string?> { ["minPrice"] = null, ["maxPrice"] = null, ["rating"] = null, ["page"] = null })">ล้างตัวกรอง</a> }
+            </form>
+        </aside>
+        <section class="stay-results" aria-labelledby="results-title">
+            <div class="stay-results-head">
+                @if (q.Promo is not null) { <p class="selected-promo">โค้ดที่เลือก <strong>@q.Promo</strong> · เลือกที่พักแล้วระบบใส่โค้ดให้ในหน้าชำระเงิน <a class="text-link" href="@q.With(new Dictionary<string, string?> { ["promo"] = null })">ไม่ใช้โค้ด</a></p> }
+                <div><h1 id="results-title">@heading</h1><p class="muted" aria-live="polite">พบ @Model.Total.ToString("N0") ที่พัก@(q.Q is not null ? " · ค้นหา \"" + q.Q + "\"" : "")</p></div>
+                <form method="get" action="/Stays" class="sort-form">
+                    @foreach (var (k, v) in new[] { ("destination", q.Destination), ("q", q.Q), ("category", q.Category), ("minPrice", q.MinPrice?.ToString()), ("maxPrice", q.MaxPrice?.ToString()), ("rating", q.Rating?.ToString(inv)), ("checkin", q.CheckIn), ("checkout", q.CheckOut), ("guests", q.Guests?.ToString()), ("rooms", q.Rooms?.ToString()), ("promo", q.Promo) }) {
+                        if (!string.IsNullOrEmpty(v)) { <input type="hidden" name="@k" value="@v" /> }
+                    }
+                    <label for="hotel-sort">เรียงตาม</label>
+                    <select id="hotel-sort" name="sort" onchange="this.form.submit()">@foreach (var s in StayListQuery.Sorts) { <option value="@s.Key" selected="@(q.Sort == s.Key)">@s.Value</option> }</select>
+                    <noscript><button class="stay-button secondary" type="submit">เรียง</button></noscript>
+                </form>
+            </div>
+            @if (Model.Total == 0) {
+                <div class="surface empty-results"><h2>ยังไม่มีที่พักตรงกับตัวเลือกนี้</h2><p>ลองลดเงื่อนไขลงอีกนิด</p><a class="stay-button secondary" href="/Stays">ดูที่พักทั้งหมด</a></div>
+            } else {
+                <ol class="stay-list">
+                    @foreach (var h in Model.Hotels) {
+                        var cat = StayEnvironmentOptions.Categories.TryGetValue(h.Environment.Category ?? "", out var c) ? c : null;
+                        <li class="stay-row">
+                            <a class="stay-row-photo" href="@q.Detail(h.Id)" tabindex="-1" aria-hidden="true"><partial name="_HotelPhoto" model="h" /></a>
+                            <div class="stay-row-heart"><partial name="_WishlistButton" model="h.Id" /></div>
+                            <div class="stay-row-body">
+                                <h2><a href="@q.Detail(h.Id)">@h.Name</a></h2>
+                                <p class="stay-row-place">@h.City@if (cat is not null) { <span> · @cat</span> }</p>
+                                @if (h.ReviewScore is double score) {
+                                    <p class="stay-row-rating"><span class="rating-badge">@score.ToString("0.0", inv)</span><span class="rating-stars" aria-hidden="true">@for (var i = 0; i < 5; i++) { <svg viewBox="0 0 24 24" class="@(i < (int)Math.Round(score) ? "on" : "")"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" /></svg> }</span><span class="muted">@h.ReviewCount.ToString("N0") รีวิว<span class="visually-hidden"> คะแนน @score.ToString("0.0", inv) จาก 5</span></span></p>
+                                } else {
+                                    <p class="stay-row-rating muted">ยังไม่มีรีวิว</p>
+                                }
+                                @if (h.Environment.HasPool == true || h.Themes.Count > 0) {
+                                    <ul class="stay-row-tags">
+                                        @if (h.Environment.HasPool == true) { <li>มีสระว่ายน้ำ</li> }
+                                        @foreach (var t in h.Themes.Where(t => t != "pool").Take(3)) { if (StayEnvironmentOptions.DiscoveryCategories.TryGetValue(t, out var tl)) { <li>@tl</li> } }
+                                    </ul>
+                                }
+                            </div>
+                            <div class="stay-row-price">
+                                <span class="muted">ราคาเริ่มต้น</span>
+                                @if (h.StartingRate is decimal rate) {
+                                    <strong>฿@rate.ToString("#,##0.##", inv)</strong>
+                                } else { <strong>ยังไม่เปิดจอง</strong> }
+                                <span class="muted">/ ห้อง / คืน</span>
+                                <a class="stay-button" href="@q.Detail(h.Id)">ดูห้องพัก<span class="visually-hidden"> @h.Name</span></a>
+                            </div>
+                        </li>
+                    }
+                </ol>
+                @if (Model.PageCount > 1) {
+                    <nav class="catalog-pagination" aria-label="หน้ารายการที่พัก">
+                        @if (q.Page > 1) { <a class="stay-button secondary" href="@q.With(new Dictionary<string, string?> { ["page"] = (q.Page - 1).ToString() })">ก่อนหน้า</a> }
+                        <span>หน้า @q.Page จาก @Model.PageCount</span>
+                        @if (q.Page < Model.PageCount) { <a class="stay-button secondary" href="@q.With(new Dictionary<string, string?> { ["page"] = (q.Page + 1).ToString() })">ถัดไป</a> }
+                    </nav>
+                }
+            }
+        </section>
+    </div>
+</div>

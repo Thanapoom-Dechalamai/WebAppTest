@@ -1,0 +1,112 @@
+@model HotelPage
+@inject Nontiwat_7362_L002.Services.IThaiClock Clock
+@using Nontiwat_7362_L002.Services
+@using Nontiwat_7362_L002.Models
+@{ Layout = "_StayLayout"; ViewData["Title"] = Model.Hotel.Name; var hotel = Model.Hotel; var inv = System.Globalization.CultureInfo.InvariantCulture;
+   var staffOnly = User.Identity?.IsAuthenticated == true && !User.IsInRole(AppRoles.Customer);
+   var amenities = hotel.Amenities ?? HotelCatalogRules.LegacyAmenities;
+   var hotelGallery = Model.Photos.Where(photo => photo.RoomId is null && photo.Url != hotel.PhotoUrl).ToList(); }
+<section class="stay-container commerce-page hotel-detail a-detail">
+    <nav class="breadcrumbs a-breadcrumbs" aria-label="เส้นทาง"><a asp-controller="Account" asp-action="Index" asp-fragment="hotels">ที่พักทั้งหมด</a><span aria-hidden="true">/</span><span>@hotel.City</span></nav>
+    <partial name="_CommerceMessage" />
+    @if (User.IsInRole(AppRoles.Admin)) {
+        <div class="role-inline hotel-catalog-actions">
+            <a class="stay-button secondary" asp-controller="HotelCatalog" asp-action="Edit" asp-route-id="@hotel.Id">แก้ไขข้อมูลโรงแรม</a>
+            <a class="stay-button secondary" asp-controller="HotelCatalog" asp-action="Archive" asp-route-id="@hotel.Id">นำออกจากหน้าเว็บ</a>
+        </div>
+    }
+    <header class="a-detail-head">
+        <div>
+            <h1>@hotel.Name</h1>
+            <p class="a-detail-meta"><span>@hotel.City</span>@if (Model.Reviews?.Total > 0) { <a href="#reviews">@Model.Reviews.Average.ToString("0.0", inv) / 5 · @Model.Reviews.Total.ToString("N0") รีวิว</a> } else { <span>ยังไม่มีรีวิว</span> }</p>
+        </div>
+        <partial name="_WishlistButton" model="hotel.Id" />
+    </header>
+    <figure class="property-hero a-detail-photo">
+        <partial name="_HotelPhoto" model="hotel" view-data='@(new ViewDataDictionary(ViewData) { ["PhotoEager"] = true })' />
+        @if (hotel.PhotoSourceUrl is not null) { <figcaption>ภาพจาก <a href="@hotel.PhotoSourceUrl" target="_blank" rel="noopener">@hotel.PhotoCredit</a></figcaption> }
+        else if (!string.IsNullOrWhiteSpace(hotel.PhotoCredit)) { <figcaption>@hotel.PhotoCredit</figcaption> }
+    </figure>
+    @if (hotelGallery.Count > 0) {
+        <section class="hotel-gallery" aria-labelledby="hotel-gallery-title">
+            <h2 id="hotel-gallery-title">รูปภาพที่พัก</h2>
+            <div class="hotel-photo-grid">
+                @foreach (var photo in hotelGallery) {
+                    <figure><img src="@photo.Url" alt="@hotel.Name" loading="lazy" onerror="this.onerror=null;this.src='/images/stay/photo-pending.svg'" />@if (!string.IsNullOrWhiteSpace(photo.Credit)) { <figcaption>@photo.Credit</figcaption> }</figure>
+                }
+            </div>
+        </section>
+    }
+
+    <div class="a-detail-grid">
+        <div class="a-detail-main">
+            <section id="overview" class="a-block">
+                <h2>เกี่ยวกับที่พัก</h2>
+                <p class="hotel-description">@hotel.Description</p>
+                @if (amenities.Count > 0) {
+                    <ul class="a-amenities" id="amenities" aria-label="สิ่งอำนวยความสะดวก">
+                        @foreach (var amenity in amenities) { <li>@amenity</li> }
+                    </ul>
+                }
+                @if (hotel.Amenities is null) { <p class="a-note">รายการสิ่งอำนวยความสะดวกเป็นค่าตัวอย่าง รายละเอียดจริงของที่พักอาจต่างออกไป</p> }
+            </section>
+            <section class="a-block environment-overview" aria-labelledby="environment-title">
+                <h2 id="environment-title">บรรยากาศและพื้นที่ใกล้เคียง</h2>
+                <dl class="a-facts">
+                    <div><dt>วิวหลัก</dt><dd>@(StayEnvironmentOptions.Views.GetValueOrDefault(hotel.Environment.ViewType) ?? "ยังไม่ระบุ")</dd></div>
+                    <div><dt>ห่างจากทะเล</dt><dd>@StayEnvironmentOptions.Distance(hotel.Environment.SeaDistanceKm)</dd></div>
+                    <div><dt>ห่างจากป่า</dt><dd>@StayEnvironmentOptions.Distance(hotel.Environment.ForestDistanceKm)</dd></div>
+                    <div><dt>สระว่ายน้ำ</dt><dd>@(hotel.Environment.HasPool is null ? "ยังไม่ระบุ" : hotel.Environment.HasPool.Value ? "มี" : "ไม่มี")</dd></div>
+                </dl>
+                @if (!string.IsNullOrWhiteSpace(hotel.Environment.ViewDescription)) { <p>@hotel.Environment.ViewDescription</p> }
+                <p class="a-note">วิวขึ้นอยู่กับประเภทห้อง @if (hotel.Environment.SourceUrl is not null) { <text>· </text><a href="@hotel.Environment.SourceUrl" target="_blank" rel="noopener">แหล่งข้อมูลบรรยากาศ</a> }</p>
+            </section>
+            <section class="a-block" id="rooms" aria-labelledby="rooms-title">
+                <h2 id="rooms-title">ห้องพัก</h2>
+                <p class="a-note">พักได้ 1–30 คืน · ไม่เกิน 2 คนต่อห้อง · ส่งคำขอจองให้เจ้าหน้าที่ตรวจราคาและห้องว่าง</p>
+                @if (Model.Rooms.Count == 0) { <p>โรงแรมยังไม่เปิดขายห้องพัก</p> }
+                @foreach (var room in Model.Rooms)
+                {
+                    <article class="room-row a-room">
+                        <div class="a-room-info">
+                            <h3>@room.Name</h3>
+                            @if (room.SizeSquareMeters is int size) { <p>@size ตร.ม.</p> }
+                            @if (!string.IsNullOrWhiteSpace(room.BedType) || room.BedCount is not null) {
+                                <p>@room.BedType @if (room.BedCount is int beds) { <text>· @beds เตียง</text> }</p>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(room.Features)) { <p class="hotel-description">@room.Features</p> }
+                            <p class="a-room-price"><strong>฿@room.NightlyRate(hotel.Price).ToString("#,##0.##", inv)</strong> <span>/ ห้อง / คืน</span></p>
+                            @foreach (var photo in Model.Photos.Where(photo => photo.RoomId == room.Id)) {
+                                <figure class="hotel-room-photo"><img src="@photo.Url" alt="@room.Name" loading="lazy" onerror="this.onerror=null;this.src='/images/stay/photo-pending.svg'" />@if (!string.IsNullOrWhiteSpace(photo.Credit)) { <figcaption>@photo.Credit</figcaption> }</figure>
+                            }
+                        </div>
+                        <form asp-controller="Support" asp-action="New" asp-route-id="" method="get" class="room-booking a-room-form">
+                            <input type="hidden" name="PromotionCode" value="@Context.Request.Query["promo"]" /><input type="hidden" name="HotelId" value="@hotel.Id" /><input type="hidden" name="RoomType" value="@room.Id" />
+                            <div class="a-room-fields">
+                                <label>เช็กอิน<input type="date" name="CheckIn" value="@Clock.Today.AddDays(1).ToString("yyyy-MM-dd")" min="@Clock.Today.ToString("yyyy-MM-dd")" required /></label>
+                                <label>เช็กเอาต์<input type="date" name="CheckOut" value="@Clock.Today.AddDays(2).ToString("yyyy-MM-dd")" min="@Clock.Today.AddDays(1).ToString("yyyy-MM-dd")" required /></label>
+                                <label>ห้อง<select name="Rooms">@for (int i = 1; i <= 5; i++) { <option value="@i">@i ห้อง</option> }</select></label>
+                                <label>ผู้เข้าพัก<input name="Guests" type="number" value="2" min="1" max="10" required /></label>
+                            </div>
+                            <details class="special-request"><summary>เพิ่มคำขอพิเศษ (ไม่บังคับ)</summary><label for="special-@room.Id" class="visually-hidden">คำขอพิเศษ</label><textarea id="special-@room.Id" name="SpecialRequest" maxlength="300" rows="2" aria-describedby="special-help-@room.Id" placeholder="เช่น ขอห้องชั้นสูง เตียงเสริม เช็กอินดึก"></textarea><small id="special-help-@room.Id" class="special-help">โรงแรมจะพยายามจัดให้ แต่ไม่รับประกัน</small></details>
+                            @if (staffOnly) { <p class="a-note">ทำรายการแทนลูกค้าจากเคสในคิวแชต</p> } else {
+                                <div class="a-room-actions">
+                                    <button class="stay-button" type="submit">ติดต่อเจ้าหน้าที่เพื่อจอง</button>
+                                </div>
+                            }
+                        </form>
+                    </article>
+                }
+            </section>
+            @if (Model.Reviews is not null) { <partial name="_Reviews" model="Model" /> }
+        </div>
+        <aside class="a-detail-aside" aria-label="สรุปราคา">
+            <p class="a-aside-label">ราคาเริ่มต้น</p>
+            @if (Model.Rooms.Count > 0) {
+                <p class="a-aside-price">฿@Model.Rooms.Min(room => room.NightlyRate(hotel.Price)).ToString("#,##0.##", inv) <span>/ คืน</span></p>
+            } else { <p>ยังไม่เปิดจอง</p> }
+            <ul><li>ชำระด้วยเครดิต Lodgo</li><li>พนักงานโรงแรมยืนยันห้องให้</li><li>ยกเลิกก่อนวันเช็กอิน คืนเครดิตเต็มจำนวน</li></ul>
+            <a class="stay-button" href="#rooms">เลือกห้อง</a>
+        </aside>
+    </div>
+</section>

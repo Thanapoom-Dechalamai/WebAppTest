@@ -1,0 +1,33 @@
+@model CreditHistoryPage
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ประวัติเครดิต"; }
+<section class="stay-container commerce-page credit-history-page">
+    <a class="back-link" href="/Member/Wallet">กลับไปหน้าเครดิตของฉัน</a>
+    <h1>ประวัติเครดิต</h1>
+    <p class="lead-note">ทุกรายการเติม ชำระ และคืนเครดิตของบัญชีนี้ · เวลาประเทศไทย</p>
+    <div class="credit-summary">
+        <div class="surface kpi-card"><span>ยอดคงเหลือตอนนี้</span><strong>฿@Model.Balance.ToString("N2")</strong></div>
+        <div class="surface kpi-card"><span>จำนวนรายการ</span><strong>@Model.Total.ToString("N0")</strong></div>
+    </div>
+    <div class="surface history-panel">
+        @if (Model.Total == 0) { <div class="inline-empty">ยังไม่มีรายการ <a href="/Member/Wallet">เติมเครดิต</a> เพื่อจองทริปแรกของคุณ</div> }
+        else {
+            <p class="muted">รายการที่ @(((Model.Page - 1) * CreditHistoryPage.PageSize + 1).ToString("N0"))–@(Math.Min(Model.Page * CreditHistoryPage.PageSize, Model.Total).ToString("N0")) จาก @Model.Total.ToString("N0") · ใหม่ก่อน</p>
+            <div class="table-scroll"><table class="ledger-table credit-table">
+                <thead><tr><th scope="col">วันและเวลา</th><th scope="col">รายการ</th><th scope="col">จำนวน</th><th scope="col">คงเหลือ</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Entries) {
+                    <tr data-entry="@item.Id"><td>@item.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</td><td>@item.Description</td><td class="@(item.Amount > 0 ? "positive" : "negative")">@(item.Amount > 0 ? "+" : "")@item.Amount.ToString("N2")</td><td>฿@item.BalanceAfter.ToString("N2")</td></tr>
+                }
+                @if (Model.Entries.Count == 0) { <tr><td colspan="4">ไม่มีรายการในหน้านี้ <a href="/Member/CreditHistory">กลับไปหน้าแรก</a></td></tr> }
+                </tbody>
+            </table></div>
+            @if (Model.PageCount > 1) {
+                <nav class="catalog-pagination credit-pages" aria-label="หน้าประวัติเครดิต">
+                    @if (Model.Page > 1) { <a class="stay-button secondary" href="/Member/CreditHistory?page=@(Model.Page - 1)">ใหม่กว่า</a> }
+                    <span>หน้า @Model.Page / @Model.PageCount</span>
+                    @if (Model.Page < Model.PageCount) { <a class="stay-button secondary" href="/Member/CreditHistory?page=@(Model.Page + 1)">เก่ากว่า</a> }
+                </nav>
+            }
+        }
+    </div>
+</section>

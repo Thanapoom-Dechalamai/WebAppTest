@@ -1,0 +1,21 @@
+@using Nontiwat_7362_L002.Models
+@{
+    // Short headings for the icon bar; the full name stays as the button's title
+    var ShortLabels = new Dictionary<string, string> { ["beach"] = "ใกล้ทะเล", ["forest"] = "ใกล้ป่า", ["mountain"] = "ภูเขา", ["city"] = "ในเมือง", ["river"] = "ริมแม่น้ำ", ["garden"] = "ในสวน", ["lake"] = "ทะเลสาบ", ["ricefield"] = "ทุ่งนา", ["pool"] = "มีสระว่ายน้ำ", ["airport"] = "ใกล้สนามบิน", ["shopping"] = "ใกล้ช้อปปิ้ง", ["golf"] = "สนามกอล์ฟ" };
+}
+@{ var inline = ViewData["InlineTools"] is true; }
+<section class="environment-discovery" aria-label="บรรยากาศและตัวกรองที่พัก">
+<div class="environment-categories" role="group" aria-label="หมวดหมู่ที่พัก">
+<button type="button" class="environment-category active" data-category="" aria-pressed="true"><partial name="_CategoryIcon" model="@("all")" /><span class="env-label">ทั้งหมด</span><small class="category-count env-count-all"></small></button>
+@foreach(var item in StayEnvironmentOptions.DiscoveryCategories) {
+<button type="button" class="environment-category" data-category="@item.Key" aria-pressed="false" title="@item.Value"><partial name="_CategoryIcon" model="@item.Key" /><span class="env-label">@(ShortLabels.TryGetValue(item.Key, out var shortName) ? shortName : item.Value)</span><small class="category-count" data-count-for="@item.Key"></small></button>
+}
+</div>
+<div class="environment-fields" id="environment-filters">
+@if (inline) { <label class="env-keyword" for="hotel-keyword">ค้นหาชื่อที่พักหรือจังหวัด<input type="search" id="hotel-keyword" placeholder="เช่น เชียงใหม่ หรือ Centara" autocomplete="off" /></label> }
+<label>สระว่ายน้ำ<select id="filter-pool"><option value="">ไม่จำกัด</option><option value="true">มีสระว่ายน้ำ</option><option value="false">ไม่มีสระว่ายน้ำ</option></select></label>
+<label>ห่างทะเลไม่เกิน<select id="filter-sea"><option value="">ไม่จำกัด</option><option value="0">ติดทะเล</option><option value="0.5">500 เมตร</option><option value="1">1 กม.</option><option value="5">5 กม.</option><option value="10">10 กม.</option></select></label>
+<label>ห่างป่าไม่เกิน<select id="filter-forest"><option value="">ไม่จำกัด</option><option value="0">ติดป่า</option><option value="1">1 กม.</option><option value="5">5 กม.</option><option value="10">10 กม.</option></select></label>
+@if (inline) { <label class="env-sort" for="hotel-sort">เรียงตาม<select id="hotel-sort"><option value="recommended">แนะนำ</option><option value="price-asc">ราคาต่ำไปสูง</option><option value="price-desc">ราคาสูงไปต่ำ</option><option value="rating">คะแนนรีวิวสูงสุด</option></select></label> }
+</div>
+</section>

@@ -1,0 +1,38 @@
+@model HotelAccessPage
+@using Nontiwat_7362_L002.Services
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ขอสิทธิ์ดูแลโรงแรม"; }
+<section class="stay-container commerce-page access-page"><partial name="_RoleNavigation" />
+    <p><a class="back-link" asp-action="Index">กลับไปหน้างานการจอง</a></p>
+    <h1>ขอสิทธิ์ดูแลโรงแรม</h1>
+    <p class="lead-note">เลือกโรงแรมที่คุณทำงานอยู่ แนบหลักฐาน เช่น รูปบัตรพนักงาน หรือหนังสือรับรองจากโรงแรม Admin หรือ Manager จะตรวจแล้วแจ้งผลทางการแจ้งเตือน เมื่ออนุมัติแล้วคุณจะเห็นและจัดการการจองของโรงแรมนั้นได้ทันที</p>
+    <partial name="_CommerceMessage" />
+    @if (!User.IsInRole(AppRoles.HotelOwner)) { <p class="simulation-box">หน้านี้สำหรับบัญชีพนักงานโรงแรม บัญชีของคุณจัดการได้ทุกโรงแรมอยู่แล้ว</p> } else {
+    <form asp-action="Access" method="post" enctype="multipart/form-data" class="surface form-stack access-form">
+        <label for="access-hotel">โรงแรม
+            <select id="access-hotel" name="HotelId" required>
+                <option value="">เลือกโรงแรม</option>
+                @foreach (var h in Model.Hotels) { <option value="@h.Id">@h.Name · @h.City</option> }
+            </select>
+        </label>
+        <label for="access-proof">หลักฐานว่าเป็นพนักงานของโรงแรมนี้ (@UploadedFiles.Rule)
+            <input id="access-proof" type="file" name="Proof" accept="image/png,image/jpeg,application/pdf" required />
+        </label>
+        <label for="access-message">ข้อความถึงผู้อนุมัติ (ไม่บังคับ)
+            <textarea id="access-message" name="Message" maxlength="500" rows="3" placeholder="เช่น ตำแหน่ง แผนก และเบอร์ติดต่อของหัวหน้างาน"></textarea>
+        </label>
+        <button class="stay-button" type="submit">ส่งคำขอ</button>
+    </form>
+    }
+    <h2>คำขอของคุณ</h2>
+    @if (Model.Requests.Count == 0) { <p class="muted">ยังไม่เคยส่งคำขอ</p> } else {
+    <div class="surface table-scroll"><table class="ledger-table">
+        <thead><tr><th scope="col">โรงแรม</th><th scope="col">ส่งเมื่อ</th><th scope="col">สถานะ</th><th scope="col">หลักฐาน</th></tr></thead>
+        <tbody>@foreach (var r in Model.Requests) {
+            <tr><td>@r.HotelName<br /><small class="muted">@r.City</small></td>
+                <td>@r.Request.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture)</td>
+                <td><span class="pill @(r.Request.Status == AccessRequestStatus.Pending ? "pending" : "")">@AccessRequestStatus.Label(r.Request.Status)</span>@if (r.Request.ReviewNote is not null) { <br /><small>เหตุผล: @r.Request.ReviewNote</small> }</td>
+                <td><a asp-controller="HotelRequests" asp-action="Proof" asp-route-id="@r.Request.Id.ToString()" target="_blank" rel="noopener">เปิดไฟล์<span class="visually-hidden"> หลักฐานของ @r.HotelName (เปิดแท็บใหม่)</span></a></td></tr>
+        }</tbody>
+    </table></div>
+    }
+</section>

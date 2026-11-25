@@ -1,0 +1,40 @@
+@model NewCasePage
+@using Nontiwat_7362_L002.Services
+@{ Layout = "_StayLayout"; ViewData["Title"] = "ติดต่อเจ้าหน้าที่"; var f = Model.Form;
+   // The form posts NewCaseForm without a prefix, so errors are keyed by the plain field name.
+   string? Error(string key) => ViewData.ModelState.TryGetValue(key, out var entry) ? entry.Errors.FirstOrDefault()?.ErrorMessage : null; }
+<section class="stay-container commerce-page support-page">
+    <a class="back-link" href="/Support">เรื่องที่แจ้งทั้งหมด</a>
+    <h1>@(Model.HotelName is not null ? "ติดต่อเจ้าหน้าที่เพื่อจอง" : "ติดต่อเจ้าหน้าที่ Lodgo")</h1>
+    <p class="lead-note">แจ้งเรื่องการจอง ขอแก้ไขหรือยกเลิก หรือสอบถามเรื่องอื่น ๆ เจ้าหน้าที่จะตอบกลับในแชต</p>
+    <form method="post" asp-action="New" enctype="multipart/form-data" class="surface form-stack support-form" novalidate>
+        <div asp-validation-summary="ModelOnly" class="validation-errors" role="alert"></div>
+        @if (Model.Order is SupportOrderInfo o) {
+            <input type="hidden" name="OrderId" value="@o.Id" />
+            <p class="case-order-inline">เกี่ยวกับการจอง <strong>LG@(o.Id.ToString("D6"))</strong> · @o.HotelName · @ThaiDates.Long(o.CheckIn)</p>
+        } else if (f.OrderId is int raw) {
+            <input type="hidden" name="OrderId" value="@raw" />
+        }
+        <span class="field-error" role="alert">@Error("OrderId")</span>
+        <span class="field-error" role="alert">@Error("HotelId")</span>
+        @if (Model.HotelName is not null && Model.RoomName is not null) {
+            <p class="case-order-inline"><strong>@Model.HotelName</strong> · @Model.RoomName · @f.CheckIn?.ToString("dd/MM/yyyy") – @f.CheckOut?.ToString("dd/MM/yyyy")</p>
+            <input type="hidden" name="HotelId" value="@f.HotelId" /><input type="hidden" name="RoomType" value="@f.RoomType" />
+            <input type="hidden" name="CheckIn" value="@f.CheckIn?.ToString("yyyy-MM-dd")" /><input type="hidden" name="CheckOut" value="@f.CheckOut?.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="Rooms" value="@f.Rooms" /><input type="hidden" name="Guests" value="@f.Guests" />
+            <input type="hidden" name="PromotionCode" value="@f.PromotionCode" /><input type="hidden" name="SpecialRequest" value="@f.SpecialRequest" />
+        }
+        <label for="topic">เรื่อง</label>
+        <select id="topic" name="Topic">@foreach (var t in Nontiwat_7362_L002.Models.SupportTopic.All) { <option value="@t" selected="@(f.Topic == t)">@Nontiwat_7362_L002.Models.SupportTopic.Label(t)</option> }</select>
+        <label for="subject">หัวข้อ</label>
+        <input id="subject" name="Subject" value="@f.Subject" maxlength="120" required aria-describedby="subject-error" placeholder="เช่น ยังไม่ได้รับการยืนยันห้อง" />
+        <span id="subject-error" class="field-error" role="alert">@Error("Subject")</span>
+        <label for="body">รายละเอียด</label>
+        <textarea id="body" name="Body" rows="6" maxlength="2000" aria-describedby="body-error body-help">@f.Body</textarea>
+        <small id="body-help" class="special-help">ไม่เกิน 2,000 ตัวอักษร</small>
+        <span id="body-error" class="field-error" role="alert">@Error("Body")</span>
+        <label for="case-attachment">แนบไฟล์ (JPG, PNG หรือ PDF ไม่เกิน 5 MB)</label>
+        <input id="case-attachment" type="file" name="Attachment" accept="image/jpeg,image/png,application/pdf" />
+        <button class="stay-button" type="submit">เริ่มแชต</button>
+    </form>
+</section>
